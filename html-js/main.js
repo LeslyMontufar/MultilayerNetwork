@@ -22,12 +22,13 @@ class DataSet {
 }
 
 class MLP {
-    constructor({data, epochs=1000, alpha = 0.001}) {
+    constructor({data, epochs=1000, alpha = 0.001, nro_middle=4}) {
         this.alpha = alpha;
         this.data = data;
         this.epochs = epochs;
+        this.nro_middle = nro_middle;
         
-        this.tolerance = 1e-10;
+        this.tolerance = 1e-6;
         this.biggerdw = 0;
         this.oldW = [];
         this.oldV = [];
@@ -36,8 +37,8 @@ class MLP {
         this.epochError = 0;
 
         // Passo 0 - peso camada escondida e ultima camada
-        this.v = this.randomUniform(this.data.nro_in*this.data.nro_out + this.data.nro_out);
-        this.w = this.randomUniform(this.data.nro_in*this.data.nro_out + this.data.nro_out);
+        this.v = this.randomUniform(this.data.nro_in*this.nro_middle + this.nro_middle);
+        this.w = this.randomUniform(this.nro_middle*this.data.nro_out + this.data.nro_out);
         
         this.dw = 0;
         this.dw_b = 0;
@@ -46,8 +47,8 @@ class MLP {
         this.dv_b = 0;
 
         // saida - camada escondida
-        this.zin_ = this.zeros(this.data.nro_out); //nro_camada_escondida*nro_out, derivada
-        this.z = this.zeros(this.data.nro_out);
+        this.zin_ = this.zeros(this.nro_middle); 
+        this.z = this.zeros(this.nro_middle);
 
         // saida - ultima camada
         this.yin_ = this.zeros(this.data.nro_out);
@@ -71,27 +72,26 @@ class MLP {
         return randomList;
     }
 
-    calculateOut(x,w,y,yin_) {
-        for(let j=0; j<this.data.nro_out; j++) { // colunm
-            let c = w[w.length-1];
-            // console.log(c)
-            for(let i=0; i<this.data.nro_in; i++) { // line a1xnro_in
-                c += x[i]*w[i*this.data.nro_out+j];
+    calculateOut(x,w, y, yin_) {
+        for(let j=0; j<y.length; j++) { // colunm
+            let c = w[x.length*y.length+j];
+            for(let i=0; i<x.length; i++) { // line a1xnro_in
+                c += x[i]*w[i*y.length+j];
             } 
-            // console.log(c)
             yin_[j] = this.activationF_(c);
             y[j] = this.activationF(c); 
-        }
-        // console.log("Dentro: ", y)
+        }        
     }
 
-    // Bipolar sigmoid
+   
     activationF(x) {
-        return 2/(1+Math.exp(-x)) - 1 
+        return 2/(1+Math.exp(-x)) - 1  // Bipolar sigmoid
+        // return 1/(1+Math.exp(-x)) // Binary sigmoid
     }
     activationF_(x) { // derivada
         let fx = this.activationF(x);
-        return 0.5*(1+fx)*(1-fx) 
+        return 0.5*(1+fx)*(1-fx)  // Bipolar sigmoid
+        // return fx*(1-fx) // Binary sigmoid
     }
 
     updateWeights() {
@@ -102,7 +102,7 @@ class MLP {
             errYTarget = this.data.t[j]-this.y[j];
             deltaK = errYTarget*this.yin_[j];
             
-            for(let i=0; i<this.data.nro_in; i++) {
+            for(let i=0; i<this.nro_middle; i++) {
                 deltainJ += deltaK*this.w[i*this.data.nro_out+j];
 
                 // Passo 6
@@ -110,14 +110,14 @@ class MLP {
                 this.dw_b = this.alpha*deltaK;
 
                 // Passo 8
-                this.w[i*this.data.nro_out+j] += this.dw;
-                this.w[this.w.length-1] += this.dw_b;                
+                this.w[i*this.data.nro_out+j] += this.dw;              
             }
+            this.w[this.nro_middle*this.data.nro_out+j-1] += this.dw_b; // so um valor para todos 
             this.error += errYTarget*errYTarget;
         }
         this.error /= (2*this.data.nro_out)
 
-        for(let j=0; j<this.data.nro_out; j++) {
+        for(let j=0; j<this.nro_middle; j++) {
             deltaJ = deltainJ*this.zin_[j];
             
             for(let i=0; i<this.data.nro_in; i++) {
@@ -126,9 +126,9 @@ class MLP {
                 this.dv_b = this.alpha*deltaJ;
 
                 // Passo 8
-                this.v[i*this.data.nro_out+j] += this.dv;
-                this.v[this.v.length-1] += this.dv_b;               
+                this.v[i*this.nro_middle+j] += this.dv;               
             }
+            this.v[this.data.nro_in*this.nro_middle+j-1] += this.dv_b;
         }
     }
 
@@ -151,13 +151,10 @@ class MLP {
 
     feedForward({x=this.data.x}){
         // Passo 4
-        console.log(x, this.v, this.z, this.zin_)
         this.calculateOut(x, this.v, this.z, this.zin_);
-        // console.log("Fora: ", this.z, "\n")
 
         // Passo 5
-        this.calculateOut(this.z, this.w, this.y, this.yin_);        
-        // console.log("Fora: ", this.y, "\n")
+        this.calculateOut(this.z, this.w, this.y, this.yin_);
     }
 
     backForward(){
@@ -172,8 +169,7 @@ class MLP {
         this.epochError = 0;
 
         // Passo 3
-        while(this.data.case<this.data.nro_cases) {
-            // console.log(this.data.case)
+        while(this.data.case<this.data.nro_cases) {            
             this.feedForward({});
             this.backForward();
             
@@ -200,11 +196,11 @@ function multiLayerPerceptron(epochs=1000, alpha=0.01){
     const data = new DataSet({data: x, nro_in: 1,
                             target: y, nro_out: 1});
 
-    let mlp = new MLP({data, epochs: 3, alpha});
+    let mlp = new MLP({data, epochs: 10000, alpha: 0.1});
     let epoch = 1;
     let continueCondition = true;
 
-    let dotsError = [], dotsWinRate = [], dotsTarget = [], dotsY = [], maior = 0, menor = 100;;
+    let dotsError = [], dotsWinRate = [], dotsTarget = [], dotsY = [], maior = 0, menor = 100;
 
     console.log(`Initial: `)
     console.log(mlp.v)
@@ -212,13 +208,9 @@ function multiLayerPerceptron(epochs=1000, alpha=0.01){
 
     // Passo 1
     while ((epoch <= mlp.epochs) && continueCondition) {
-        console.log(`Epoch ${epoch}: `)
         continueCondition = mlp.train();
         dotsError.push({x:epoch, y:mlp.epochError})
         dotsWinRate.push({x:epoch, y:mlp.epochError})
-
-        console.log(mlp.v)
-        console.log(mlp.w)
         epoch++;
     }
 
@@ -237,6 +229,9 @@ function multiLayerPerceptron(epochs=1000, alpha=0.01){
         }
     }
     
-    
-    showInfo({epoch, mlp, menor, maior, dots:dotsError, dots2:dotsWinRate, dots3:dotsTarget, dots4:dotsY})
+    console.log(mlp, dotsY)
+    console.log(`End: `)
+    console.log(mlp.v)
+    console.log(mlp.w)
+    showInfo({epoch, mlp, menor, maior, dots:dotsError, dots3:dotsTarget, dots4:dotsY})
 }

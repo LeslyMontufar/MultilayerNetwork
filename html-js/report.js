@@ -1,15 +1,15 @@
-function showInfo({epoch, mlp, menor, maior, dots, dots2, dots3, dots4}) {
+function showInfo({epoch, mlp, menor, maior, dots, dots3, dots4}) {
     log(logContainer, `Aproximação obtida usando mlp:<br><br>`)
     log(logContainer, `Duração em épocas: ${epoch-1}`)
-    log(logContainer, `Erro quadrático médio final: ${mlp.globalError}`)
+    log(logContainer, `Erro quadrático médio final: ${mlp.epochError}`)
     log(logContainer, `Mínimo desvio: ${menor}`)
     log(logContainer, `Máximo desvio: ${maior}`)
 
-    drawChart(canvasError, 'Erro quadrático médio', dots, 'Taxa de acerto', dots2, epoch-1);
+    drawChart(canvasError, 'Erro quadrático médio', dots, epoch-1);
     drawApprox(canvasApprox, 'Amostras', dots3, 'Regressao Linear', dots4);
 
-    eq = `\\[` + layerEq('x',mlp.v,'z', mlp.data.nro_in, mlp.data.nro_out) + `\\]<br>`;
-    eq += `\\[` +layerEq('z',mlp.w,'y', mlp.data.nro_in, mlp.data.nro_out) 
+    eq = `\\[` + layerEq('x',mlp.v,'z', mlp.data.nro_in, mlp.nro_middle) + `\\]<br>`;
+    eq += `\\[` +layerEq('z',mlp.w,'y', mlp.nro_middle, mlp.data.nro_out) 
         
     eq += `\\approx \\begin{bmatrix}`
 

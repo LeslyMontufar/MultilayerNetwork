@@ -1,22 +1,40 @@
 #include <iostream>
-#include <string>
+#include <vector>
+
 using namespace std;
 
-class MyClass {       // The class
-  public:             // Access specifier
-    int myNum;        // Attribute (int variable)
-    string myString;  // Attribute (string variable)
+typedef double Number;
+
+class DataSet {       
+  public:              
+    int pos;
+    vector<Number> data;
+
+    DataSet(int pos) {
+      this->pos = pos;
+      this->data.resize(pos);
+    }
+
+    // vector<Number> zeros(int pos) {
+    //   vector<Number> v(pos);
+    //   // auto v = vector<Number>(pos);
+    //   for (int i = 0; i < pos; i++) {
+    //     v[i] = i+1;
+    //     cout <<i<< endl;
+    //   }
+      
+    //   return v;
+    // }
 };
 
 int main() {
-  MyClass myObj;  // Create an object of MyClass
-
-  // Access attributes and set values
-  myObj.myNum = 15; 
-  myObj.myString = "Some text";
-
-  // Print attribute values
-  cout << myObj.myNum << "\n";
-  cout << myObj.myString;
+  DataSet d(4);
+  // DataSet *d = new DataSet(4);
+  cout << d.pos << "\n";
+  for (int i = 0; i < d.pos; i++)  {
+    cout << d.data[i] << endl;
+  }
+  
+  // delete d;
   return 0;
 }

@@ -6,20 +6,20 @@ function showInfo({epoch, mlp, menor, maior, dots, dots3, dots4}) {
     log(logContainer, `Máximo desvio: ${maior}`)
 
     drawChart(canvasError, 'Erro quadrático médio', dots, epoch-1);
-    drawApprox(canvasApprox, 'Amostras', dots3, 'Regressao Linear', dots4);
+    drawApprox(canvasApprox, 'Amostras', dots3, 'Aproximação', dots4);
 
     eq = `\\[` + layerEq('x',mlp.v,'z', mlp.data.nro_in, mlp.nro_middle) + `\\]<br>`;
     eq += `\\[` +layerEq('z',mlp.w,'y', mlp.nro_middle, mlp.data.nro_out) 
         
     eq += `\\approx \\begin{bmatrix}`
 
-    for (let i=1;i<mlp.data.nro_out;i++){
-        eq += `t_{1${i}} & `
+    if(mlp.nro_middle<6){
+        for (let i=1;i<mlp.data.nro_out;i++){
+            eq += `t_{1${i}} & `
+        }
+        eq += `t_{1${mlp.data.nro_in}} \\end{bmatrix} \\]`
+        log(logContainer, eq);
     }
-
-    eq += `t_{1${mlp.data.nro_in}} \\end{bmatrix} \\]`
-
-    log(logContainer, eq);
 }
 
 function layerEq(x,w,y, rows, columns){

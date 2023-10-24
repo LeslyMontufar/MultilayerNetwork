@@ -22,13 +22,13 @@ class DataSet {
 }
 
 class MLP {
-    constructor({data, epochs=1000, alpha = 0.001, nro_middle=4}) {
+    constructor({data, epochs=1000, alpha = 0.01, nro_middle=5}) {
         this.alpha = alpha;
         this.data = data;
         this.epochs = epochs;
         this.nro_middle = nro_middle;
         
-        this.tolerance = 1e-6;
+        this.tolerance = 1e-4;
         this.biggerdw = 0;
         this.oldW = [];
         this.oldV = [];
@@ -72,7 +72,7 @@ class MLP {
         return randomList;
     }
 
-    calculateOut(x,w, y, yin_) {
+    calculateOut(x, w, y, yin_) {
         for(let j=0; j<y.length; j++) { // colunm
             let c = w[x.length*y.length+j];
             for(let i=0; i<x.length; i++) { // line a1xnro_in
@@ -80,18 +80,20 @@ class MLP {
             } 
             yin_[j] = this.activationF_(c);
             y[j] = this.activationF(c); 
-        }        
+        }  
     }
 
    
     activationF(x) {
         return 2/(1+Math.exp(-x)) - 1  // Bipolar sigmoid
         // return 1/(1+Math.exp(-x)) // Binary sigmoid
+        // return x
     }
     activationF_(x) { // derivada
         let fx = this.activationF(x);
         return 0.5*(1+fx)*(1-fx)  // Bipolar sigmoid
         // return fx*(1-fx) // Binary sigmoid
+        // return x
     }
 
     updateWeights() {
@@ -104,31 +106,27 @@ class MLP {
             
             for(let i=0; i<this.nro_middle; i++) {
                 deltainJ += deltaK*this.w[i*this.data.nro_out+j];
-
                 // Passo 6
                 this.dw = this.alpha*deltaK*this.z[i]; 
-                this.dw_b = this.alpha*deltaK;
-
                 // Passo 8
                 this.w[i*this.data.nro_out+j] += this.dw;              
             }
-            this.w[this.nro_middle*this.data.nro_out+j-1] += this.dw_b; // so um valor para todos 
+            this.dw_b = this.alpha*deltaK;
+            this.w[this.nro_middle*this.data.nro_out+j] += this.dw_b; 
             this.error += errYTarget*errYTarget;
         }
         this.error /= (2*this.data.nro_out)
 
         for(let j=0; j<this.nro_middle; j++) {
             deltaJ = deltainJ*this.zin_[j];
-            
             for(let i=0; i<this.data.nro_in; i++) {
                 // Passo 7
                 this.dv = this.alpha*deltaJ*this.data.x[i]; 
-                this.dv_b = this.alpha*deltaJ;
-
                 // Passo 8
                 this.v[i*this.nro_middle+j] += this.dv;               
             }
-            this.v[this.data.nro_in*this.nro_middle+j-1] += this.dv_b;
+            this.dv_b = this.alpha*deltaJ;
+            this.v[this.data.nro_in*this.nro_middle+j] += this.dv_b;
         }
     }
 
@@ -150,11 +148,8 @@ class MLP {
     }
 
     feedForward({x=this.data.x}){
-        // Passo 4
-        this.calculateOut(x, this.v, this.z, this.zin_);
-
-        // Passo 5
-        this.calculateOut(this.z, this.w, this.y, this.yin_);
+        this.calculateOut(x, this.v, this.z, this.zin_); // Passo 4
+        this.calculateOut(this.z, this.w, this.y, this.yin_); // Passo 5
     }
 
     backForward(){
@@ -192,17 +187,17 @@ class MLP {
 
 // inicio
 
-function multiLayerPerceptron(epochs=1000, alpha=0.01){
+function multiLayerPerceptron(epochs=1000, alpha=0.01, nro_middle=4){
     const data = new DataSet({data: x, nro_in: 1,
                             target: y, nro_out: 1});
 
-    let mlp = new MLP({data, epochs: 10000, alpha: 0.1});
+    let mlp = new MLP({data, epochs, alpha, nro_middle});
     let epoch = 1;
     let continueCondition = true;
 
     let dotsError = [], dotsWinRate = [], dotsTarget = [], dotsY = [], maior = 0, menor = 100;
 
-    console.log(`Initial: `)
+    console.log(`Init: `)
     console.log(mlp.v)
     console.log(mlp.w)
 
@@ -215,7 +210,7 @@ function multiLayerPerceptron(epochs=1000, alpha=0.01){
     }
 
     for(let i in data.target) {
-        prediction = mlp.predict(data.data[i])
+        prediction = mlp.predict(data.data[i])[0]
         dotsTarget.push({x:data.data[i],y:data.target[i]});
         dotsY.push({x:data.data[i],y:prediction});
         
@@ -229,9 +224,6 @@ function multiLayerPerceptron(epochs=1000, alpha=0.01){
         }
     }
     
-    console.log(mlp, dotsY)
-    console.log(`End: `)
-    console.log(mlp.v)
-    console.log(mlp.w)
+    console.log(mlp, dotsY)    
     showInfo({epoch, mlp, menor, maior, dots:dotsError, dots3:dotsTarget, dots4:dotsY})
 }

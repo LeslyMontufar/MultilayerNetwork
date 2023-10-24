@@ -24,15 +24,25 @@
         <div class="container">
             <form id="form">
                 <label for="epochs">epochs:</label>
-                <input type="text" id="epochs" name="epochs" placeholder="1000" class="item">
+                <input type="text" id="epochs" name="epochs" placeholder="100000" class="item">
 
                 <label for="alpha">alpha:</label>
                 <input type="text" id="alpha" name="alpha" placeholder="0.01" class="item">
+
+                <label for="nro_middle">nro_middle:</label>
+                <input type="text" id="nro_middle" name="nro_middle" placeholder="5" class="item">
 
                 <button type="submit">Calcular</button>
             </form>
         
             <div id="logContainer"></div>
+
+            <div class="chart">
+                <canvas id="errorChart"></canvas>
+            </div>
+            <div class="chart">
+                <canvas id="funcApprox"></canvas>
+            </div>
             
             <p>Para o x:<br></p>
             <button id="logarithmic">Logarithmic scale</button>
@@ -41,15 +51,7 @@
 
             <p>Para o erro:<br></p>
             <button id="logarithmicY">Logarithmic scale</button>
-            <button id="linearY">Linear scale</button>
-
-
-            <div class="chart">
-                <canvas id="errorChart"></canvas>
-            </div>
-            <div class="chart">
-                <canvas id="linearRegression"></canvas>
-            </div>
+            <button id="linearY">Linear scale</button>          
             
         </div>
         
@@ -57,7 +59,7 @@
         <script>
             // get IDs 
             const canvasError = document.getElementById('errorChart');
-            const canvasApprox = document.getElementById('linearRegression');
+            const canvasApprox = document.getElementById('funcApprox');
             const logContainer = document.getElementById('logContainer');
 
             // calculate
@@ -90,6 +92,7 @@
                 
                 let epochs = parseFloat(document.getElementById('epochs').value);
                 let alpha = parseFloat(document.getElementById('alpha').value);
+                let nro_middle = parseFloat(document.getElementById('nro_middle').value);
                 
                 logContainer.innerHTML = '';
                 if(canvasError.chart){
@@ -99,13 +102,16 @@
                     canvasApprox.chart.destroy();
                 }
                 if(isNaN(epochs)){
-                    epochs = 1000;
+                    epochs = 100000;
                 }
                 if(isNaN(alpha)){
                     alpha = 0.01;
                 }
+                if(isNaN(nro_middle)){
+                    nro_middle = 5;
+                }
 
-                multiLayerPerceptron(epochs, alpha);
+                multiLayerPerceptron(epochs, alpha, nro_middle);
                 renderLatex();
             });            
         </script>

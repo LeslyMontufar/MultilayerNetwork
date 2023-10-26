@@ -9,9 +9,25 @@ class Layer {
     std::vector<Number> y;
     std::vector<Number> dyin;
     std::vector<Number>* x;
-    int nx;
-    Number (*f)(Number);
-    Number (*df)(Number);
+    size_t nx;
+    Number (*f)(Number&);
+    Number (*df)(Number&);
+
+    static Number f_bipolarSigmoid(Number& x){
+      return 2/(1+std::exp(-x)) - 1;
+    }
+
+    static Number df_bipolarSigmoid(Number& fx){
+      return 0.5*(1+fx)*(1-fx);
+    }
+
+    static Number f_binarySigmoid(Number& x){
+      return 1/(1+std::exp(-x));
+    }
+
+    static Number df_binarySigmoid(Number& fx){
+      return fx*(1-fx);
+    }
 
     Layer(const int& nNeurons, const int& activation) : nNeurons(nNeurons) {
       this->y.resize(nNeurons);
@@ -32,22 +48,6 @@ class Layer {
           break;
       }
 
-    }
-
-    Number f_bipolarSigmoid(Number& x){
-      return 2/(1+std::exp(-x)) - 1;
-    }
-
-    Number df_bipolarSigmoid(Number& fx){
-      return 0.5*(1+fx)*(1-fx);
-    }
-
-    Number f_binarySigmoid(Number& x){
-      return 1/(1+std::exp(-x));
-    }
-
-    Number df_binarySigmoid(Number& fx){
-      return fx*(1-fx);
     }
 
     void initWeights(std::vector<Number>& x){
@@ -106,14 +106,26 @@ class MLP {
     MLP(const std::vector<Sample>& samples) : trainingSamples(samples) {}
 
     // methods
+    void predict(){
+      for(size_t i=0; i<layers.size(); i++){
+        layers[i].calculateOut();
+      }
+    }
+
+    void backPropagation(){
+      
+    }
+
     void train(){
       initLayers();
 
-      for(size_t sampleI = 0; sampleI <samples.size(); sampleI++){
+      for(size_t i = 0; i <samples.size(); i++){
         // FeedForward
-        for(size_t i=0; i<layers.size(); i++){
-          layers[i].calculateOut();
-        }
+        layers[0].x = &samples[i].x;
+        predict();
+
+        // BackPropagation
+        backPropagation();
       }
 
     }

@@ -53,6 +53,9 @@
         "xlocmes": "cpp",
         "xlocmon": "cpp",
         "xloctime": "cpp",
-        "xtr1common": "cpp"
+        "xtr1common": "cpp",
+        "algorithm": "cpp",
+        "optional": "cpp",
+        "random": "cpp"
     }
 }

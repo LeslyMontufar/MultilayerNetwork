@@ -3,7 +3,7 @@
 
 class Layer {
   public:
-    int nNeurons;
+    size_t ny; // number of out elements too
     // int activation = 1; // 1 - Bipolar sigmoid
     std::vector<Number> w;
     std::vector<Number> y;
@@ -29,9 +29,9 @@ class Layer {
       return fx*(1-fx);
     }
 
-    Layer(const int& nNeurons, const int& activation) : nNeurons(nNeurons) {
-      this->y.resize(nNeurons);
-      this->dyin.resize(nNeurons);
+    Layer(const size_t& nNeurons, const int& activation) : ny(nNeurons) {
+      this->y.resize(ny);
+      this->dyin.resize(ny);
 
       switch (activation){
         case 1:
@@ -53,7 +53,7 @@ class Layer {
     void initWeights(std::vector<Number>& x){
       this->nx = x.size();
       this->x = &x;
-      w.resize(nx*nNeurons+nNeurons); // 2*3 + 3 = 9
+      w.resize(nx*ny+ny); // 2*3 + 3 = 9
       std::random_device rd;
       std::mt19937 gen(rd());
       std::uniform_real_distribution<Number> dis(-0.5, 0.5);
@@ -65,9 +65,9 @@ class Layer {
     void calculateOut(){
       Number c;
       for(size_t j=0; j<y.size(); j++){
-        c = w[nx*nNeurons+j];
+        c = w[nx*ny+j];
         for(size_t i=0; i<nx; i++){
-          c += (*x)[i] * w[i*nNeurons+j];
+          c += (*x)[i] * w[i*ny+j];
         }
         y[j] = f(c);
         dyin[j] = df(y[j]);
@@ -81,11 +81,11 @@ class Layer {
           os << x << " ";
         }
         os << "\nWeights: ";
-        for (size_t i = 0; i < n-layer.nNeurons; i++) {
+        for (size_t i = 0; i < n-layer.ny; i++) {
             os << layer.w[i] << " ";
         }
         os << "\nBias: ";
-        for (size_t i = n - layer.nNeurons; i < n; i++) {
+        for (size_t i = n - layer.ny; i < n; i++) {
             os << layer.w[i] << " ";
         }
         return os << "\n";
@@ -100,7 +100,10 @@ class MLP {
     std::vector<Layer> layers;
 
     Number tolerance = 1e-6;
-    Number mse; // Mean Square Error
+    Number mse = 0; // Mean Square Error
+
+    // aux
+    Number dw;
 
   public: 
     MLP(const std::vector<Sample>& samples) : trainingSamples(samples) {}
@@ -112,12 +115,49 @@ class MLP {
       }
     }
 
-    void backPropagation(){
-      
+    void backPropagation(std::vector<Number> target){
+      // Number dw, dE_dw, dE_dy, dz_dw;
+      // dE_dy = (y - t);
+      // dE_dw = dz_dw*layers.back().dyin * dE_dy;
+      // dw = -alpha*dE_dw;
+
+      // Last layer
+      Number dE_dy;
+      Layer layer = layers.back();
+      for(size_t j=0; j<layer.ny; j++){
+        dE_dy = layer.y[j]-target[j]; // errorYT
+        
+        for(size_t i=0; i<layer.nx; i++){
+          // dE_dw = dz_dw * dy_dz*dE_dy;
+          // dw = alpha*dE_dw; 
+          dw = alpha* (*(layer.x))[i] *layer.dyin[j]*dE_dy;
+          layer.w[i*layer.ny+j] -= dw;
+        }
+        layer.w[layer.nx*layer.ny+j] -= alpha*dE_dy;
+        mse += dE_dy*dE_dy;
+      }
+      mse /= (2*layer.ny);
+
+      // Following layers - editing here
+      for(int l=layers.size()-2; l>=0; l--){
+        layer = layers[l];
+        // for(size_t j=0; j<layer.ny; j++){          
+        //   for(size_t i=0; i<layer.nx; i++){
+        //     // dE_dw = dz_dw * dy_dz*dE_dy;
+        //     // dw = alpha*dE_dw; 
+        //     dw = alpha* (*(layer.x))[i] *layer.dyin[j]*dE_dy;
+        //     layer.w[i*layer.ny+j] -= dw;
+        //   }
+        //   layer.w[layer.nx*layer.ny+j] -= alpha*dE_dy;
+        // }
+        // dE_dy *= 
+      }
+
     }
 
     void train(){
       initLayers();
+      mse = 0;
 
       for(size_t i = 0; i <samples.size(); i++){
         // FeedForward
@@ -125,7 +165,7 @@ class MLP {
         predict();
 
         // BackPropagation
-        backPropagation();
+        backPropagation(samples[i].t);
       }
 
     }
@@ -150,6 +190,10 @@ class MLP {
       for(const Layer& layer : layers) {
         std::cout << layer << "\n";
       }
+    }
+
+    void exportNetwork(){
+      
     }
 
 };

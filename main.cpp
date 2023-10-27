@@ -67,7 +67,7 @@ class Layer {
 
     void calculateOut(){
       Number c;
-      for(size_t j=0; j<y.size(); j++){
+      for(size_t j=0; j<ny; j++){
         c = w[nx*ny+j];
         for(size_t i=0; i<nx; i++){
           c += (*x)[i] * w[i*ny+j];
@@ -105,8 +105,6 @@ class MLP {
     Number tolerance = 1e-6;
     Number mse = 0; // Mean Square Error
 
-    Number dz_dx = 0;
-
   public: 
     MLP(const std::vector<Sample>& samples) : samples(samples) {}
 
@@ -119,34 +117,36 @@ class MLP {
 
     void backPropagation(const std::vector<Number>& target){
       Layer* layer = &layers.back();
-      std::vector<Number> dE_dy(layer->ny);
-      // int s = layers.size()-1;
-      Number dw, db;
+      std::vector<Number>* dE_dz;
+      Number dw, db, errorYT, sum = 0;
 
       // Last layer
+      dE_dz = &layer->y;
       for(size_t j=0; j<layer->ny; j++){
-        dE_dy[j] = layer->y[j]-target[j]; // errorYT
-        mse += dE_dy[j]*dE_dy[j];
+        errorYT = layer->y[j]-target[j];
+        (*dE_dz)[j] = layer->dyin[j] * errorYT;
+        mse += errorYT*errorYT;
       }
-      mse /= (2*layer->ny);
+      mse /= 2;
 
       // BackPropagating and updating weigths
       for(int l=layers.size()-1; l>=0; l--){
-        dz_dx = 0;
+        sum = 0;
         layer = &layers[l];
-        // std::cout << "Layer "<< l <<"/"<< s << " dE/dy: " << dE_dy << "\n";
-        for(size_t j=0; j<layer->ny; j++){   
-          db = alpha*dE_dy[j];
+        for(size_t j=0; j<layer->ny; j++){  
+          db = alpha*(*dE_dz)[j];
           for(size_t i=0; i<layer->nx; i++){
-            dw = alpha* (*(layer->x))[i] * layer->dyin[j] * dE_dy[j];
+            dw = (*(layer->x))[i]*(*dE_dz)[j];
+            sum = (*dE_dz)[j]*layer->w[i*layer->ny+j];
 
-            dz_dx += layer->w[i*layer->ny+j];
-
-            layer->w[i*layer->ny+j] -= dw;
+            layer->w[i*layer->ny+j] -= alpha*dw;
           }
+          
+          (*dE_dz)[j] = sum * layer->dyin[j];      
+          
           layer->w[layer->nx*layer->ny+j] -= db;
-          // dE_dy[j] = dz_dx * layer->dyin[j] * dE_dy[j];
         }
+        std::cout << "Layer "<< l+1 << "/" << layers.size() << " " << (*dE_dz) << "\n";
       }
       
 

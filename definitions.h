@@ -9,9 +9,9 @@ typedef double Number;
 class Sample {       
   public:
   // attributes
-    std::vector<Number> x;
-    std::vector<Number> t;
-    int label;
+    const std::vector<Number> x;
+    const std::vector<Number> t;
+    const int label;
 
     Sample(const std::vector<Number>& x, const std::vector<Number>& target, const int& label)
             : x(x), t(target), label(label) {}
@@ -36,6 +36,13 @@ class Sample {
         return os;
     }
 };
+
+std::ostream& operator<<(std::ostream& os, const std::vector<Number>& v){
+    for(const Number& value : v){
+        os << value << " ";
+    }
+    return os;
+}
 
 std::vector<Sample> samples = {
     Sample({-1, -1}, {-1}, 0),

@@ -5,8 +5,7 @@
 
 class Layer {
   public:
-    const size_t ny; // number of out elements too
-    // int activation = 1; // 1 - Bipolar sigmoid
+    const size_t ny; 
     std::vector<Number> w;
     std::vector<Number> y;
     std::vector<Number> dyin;
@@ -14,6 +13,8 @@ class Layer {
     size_t nx;
     Number (*f)(Number&);
     Number (*df)(Number&);
+    std::vector<Number> dE_dz;
+    std::vector<Number> dE_dx;
 
     static Number f_bipolarSigmoid(Number& x){
       return 2/(1+std::exp(-x)) - 1;
@@ -32,8 +33,9 @@ class Layer {
     }
 
     Layer(const size_t& nNeurons, const int& activation) : ny(nNeurons) {
-      this->y.resize(ny);
-      this->dyin.resize(ny);
+      this->y.resize(nNeurons);
+      this->dyin.resize(nNeurons);
+      this->dE_dz.resize(nNeurons);
 
       switch (activation){
         case 1:
@@ -52,9 +54,9 @@ class Layer {
 
     }
 
-    void initWeights(const std::vector<Number>& x){
-      this->nx = x.size();
-      this->x = &x;
+    void initWeights(const std::vector<Number>& samplex){
+      this->nx = samplex.size();
+      this->x = &samplex;
       w.resize(nx*ny+ny); 
 
       std::random_device rd;
@@ -79,10 +81,9 @@ class Layer {
 
     friend std::ostream& operator<<(std::ostream& os, const Layer& layer) {
         size_t n = layer.w.size();
-        // os << "x: ";
-        // for(const Number x : *layer.x){
-        //   os << x << " ";
-        // }
+        os << "nx: "<< layer.nx << "\n";
+        os << "ny: "<< layer.ny; // << "\n";
+        
         os << "\nWeights: ";
         for (size_t i = 0; i < n-layer.ny; i++) {
             os << layer.w[i] << " ";
@@ -117,54 +118,66 @@ class MLP {
 
     void backPropagation(const std::vector<Number>& target){
       Layer* layer = &layers.back();
-      std::vector<Number>* dE_dz;
-      Number dw, db, errorYT, sum = 0;
+      Number errorYT, sum;
+
+      // dE_dy, calcular ele na ultima saida
+      // entra nas camadas, da ultima para a primeira
+      // Com o dE_dy, voce calcula o dE_dz
+      // Com o dE_dz, calcula o dE_dx
 
       // Last layer
-      dE_dz = &layer->y;
+      std::vector<Number>& dE_dy = layer->y;
+
       for(size_t j=0; j<layer->ny; j++){
         errorYT = layer->y[j]-target[j];
-        (*dE_dz)[j] = layer->dyin[j] * errorYT;
+        dE_dy[j] = errorYT;
         mse += errorYT*errorYT;
       }
       mse /= 2;
 
-      // BackPropagating and updating weigths
       for(int l=layers.size()-1; l>=0; l--){
-        sum = 0;
         layer = &layers[l];
-        for(size_t j=0; j<layer->ny; j++){  
-          db = alpha*(*dE_dz)[j];
-          for(size_t i=0; i<layer->nx; i++){
-            dw = (*(layer->x))[i]*(*dE_dz)[j];
-            sum = (*dE_dz)[j]*layer->w[i*layer->ny+j];
-
-            layer->w[i*layer->ny+j] -= alpha*dw;
-          }
-          
-          (*dE_dz)[j] = sum * layer->dyin[j];      
-          
-          layer->w[layer->nx*layer->ny+j] -= db;
+        sum = 0;
+        for(size_t j=0; j<layer->ny; j++){
+          layer->dE_dz[j] = layer->dyin[j] * dE_dy[j];
         }
-        std::cout << "Layer "<< l+1 << "/" << layers.size() << " " << (*dE_dz) << "\n";
-      }
-      
 
+        // dE_dx = dz_dx * dE_dz = w * dE_dz, w sem o b
+        for(size_t i=0; i<layer->nx; i++){
+          sum = 0;
+          for(size_t j=0; j<layer->ny; j++){
+            sum += layer->w[i*layer->ny+j]*layer->dE_dz[j];
+          }
+          layer->dE_dx[i] = sum;
+        }
+
+        dE_dy = layer->dE_dx;
+
+        for(size_t j=0; j<layer->ny; j++){
+          for(size_t i=0; i<layer->nx; i++){
+            layer->w[i*layer->ny+j] -= alpha * (*(layer->x))[i] * layer->dE_dz[j];
+          }
+          layer->w[layer->nx*layer->ny+j] -= alpha * layer->dE_dz[j];
+        }
+      }     
     }
 
     void train(){
       initLayers();
-      mse = 0;
 
-      for(size_t i = 0; i <samples.size(); i++){
-        // FeedForward
-        layers[0].x = &samples[i].x;
-        predict();
+      for(size_t epoch = 0; epoch < epochs; epochs++){      
+        mse = 0;
+        for(size_t i = 0; i <samples.size(); i++){
+          // FeedForward
+          layers[0].x = &samples[i].x;
+          predict();
 
-        // BackPropagation
-        backPropagation(samples[i].t);
+          // BackPropagation
+          backPropagation(samples[i].t);
+
+        }
+        
       }
-
     }
 
     void initLayers(){
@@ -233,8 +246,9 @@ int main() {
   MLP network(samples);
   // network.showTrainingSamples();
   network.addLayer(Layer(3,1));
+  network.addLayer(Layer(4,1));
   network.train();
   network.showTrainedNetwork();
-  network.exportNetwork();
+  // network.exportNetwork();
   return 0;
 }

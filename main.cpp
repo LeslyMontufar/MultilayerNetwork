@@ -2,10 +2,12 @@
 #include <random>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 class Layer {
   public:
     const size_t ny; 
+    std::vector<Number> w_before;
     std::vector<Number> w;
     std::vector<Number> y;
     std::vector<Number> dyin;
@@ -54,10 +56,11 @@ class Layer {
 
     }
 
-    void initWeights(const std::vector<Number>& samplex){
-      this->nx = samplex.size();
-      this->x = &samplex;
+    void initWeights(const std::vector<Number>& vx){
+      this->nx = vx.size();
+      this->x = &vx;
       w.resize(nx*ny+ny); 
+      dE_dx.resize(nx);
 
       std::random_device rd;
       std::mt19937 gen(rd());
@@ -81,9 +84,12 @@ class Layer {
 
     friend std::ostream& operator<<(std::ostream& os, const Layer& layer) {
         size_t n = layer.w.size();
-        os << "nx: "<< layer.nx << "\n";
-        os << "ny: "<< layer.ny; // << "\n";
-        
+        // os << "nx: "<< layer.nx << " " << (*(layer.x)).size()<< "\n";
+        // os << "ny: "<< layer.ny << " "<< layer.y.size();
+        // os << "\nX: ";
+        // for (size_t i = 0; i < layer.nx; i++) {
+        //     os << (*(layer.x))[i] << " ";
+        // }
         os << "\nWeights: ";
         for (size_t i = 0; i < n-layer.ny; i++) {
             os << layer.w[i] << " ";
@@ -92,6 +98,10 @@ class Layer {
         for (size_t i = n - layer.ny; i < n; i++) {
             os << layer.w[i] << " ";
         }
+        // os << "\nY: ";
+        // for (size_t i = 0; i < layer.ny; i++) {
+        //     os << layer.y[i] << " ";
+        // }
         return os << "\n";
     }
 };
@@ -99,15 +109,20 @@ class Layer {
 class MLP {
   private:
     std::vector<Sample> samples; // Training samples
-    int epochs = 10000;
+    std::vector<Sample> vsamples; // Validation samples
+    size_t epochs = 10000;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
     Number tolerance = 1e-6;
-    Number mse = 0; // Mean Square Error
+    Number mse; // Mean Square Error
+    std::vector<Number> epochError;
+    Number biggerdw;
 
   public: 
-    MLP(const std::vector<Sample>& samples) : samples(samples) {}
+    MLP(const std::vector<Sample>& samples, const std::vector<Sample>& vsamples) : samples(samples), vsamples(vsamples) { 
+      epochError.resize(epochs);
+    }
 
     // methods
     void predict(){
@@ -126,11 +141,11 @@ class MLP {
       // Com o dE_dz, calcula o dE_dx
 
       // Last layer
-      std::vector<Number>& dE_dy = layer->y;
+      std::vector<Number>* dE_dy = &layer->y;
 
       for(size_t j=0; j<layer->ny; j++){
         errorYT = layer->y[j]-target[j];
-        dE_dy[j] = errorYT;
+        (*dE_dy)[j] = errorYT;
         mse += errorYT*errorYT;
       }
       mse /= 2;
@@ -139,7 +154,7 @@ class MLP {
         layer = &layers[l];
         sum = 0;
         for(size_t j=0; j<layer->ny; j++){
-          layer->dE_dz[j] = layer->dyin[j] * dE_dy[j];
+          layer->dE_dz[j] = layer->dyin[j] * (*dE_dy)[j];
         }
 
         // dE_dx = dz_dx * dE_dz = w * dE_dz, w sem o b
@@ -151,7 +166,7 @@ class MLP {
           layer->dE_dx[i] = sum;
         }
 
-        dE_dy = layer->dE_dx;
+        dE_dy = &layer->dE_dx;
 
         for(size_t j=0; j<layer->ny; j++){
           for(size_t i=0; i<layer->nx; i++){
@@ -162,10 +177,23 @@ class MLP {
       }     
     }
 
+    void validation(){
+      for(Layer& layer : layers){
+        for(size_t i=0; i<layer.w.size(); i++){
+          layer.w_before[i] = std::abs(layer.w[i]-layer.w_before[i]);
+          biggerdw = std::max(layer.w_before[i], biggerdw);
+        }
+      }
+    }
+
     void train(){
       initLayers();
 
-      for(size_t epoch = 0; epoch < epochs; epochs++){      
+      for(size_t epoch = 0; epoch < epochs; epoch++){      
+        for(Layer& layer : layers){
+          layer.w_before = layer.w;
+        }
+        biggerdw = 0;
         mse = 0;
         for(size_t i = 0; i <samples.size(); i++){
           // FeedForward
@@ -174,9 +202,14 @@ class MLP {
 
           // BackPropagation
           backPropagation(samples[i].t);
-
+          epochError[epoch] += mse;
+          
         }
-        
+        epochError[epoch] /= samples.size();
+        validation();
+        if(biggerdw < tolerance){
+          break;
+        }
       }
     }
 
@@ -236,6 +269,15 @@ class MLP {
 
     }
 
+    void showResults(){
+      for(Sample& sample : vsamples){
+        layers[0].x = &sample.x;
+        predict();
+        std::cout << sample.x << "-> t: " << sample.t << "-> y: " << layers.back().y << "\n";
+        // showTrainedNetwork();
+        // std::cout << "*****************-----------------------\n";
+      }
+    }
 };
 
 // x
@@ -243,12 +285,14 @@ class MLP {
 // y
 
 int main() {
-  MLP network(samples);
+  MLP network(samples,samples);
   // network.showTrainingSamples();
   network.addLayer(Layer(3,1));
   network.addLayer(Layer(4,1));
   network.train();
+  network.exportNetwork();
+  network.showResults();
+  std::cout << "-----------------------\n";
   network.showTrainedNetwork();
-  // network.exportNetwork();
   return 0;
 }

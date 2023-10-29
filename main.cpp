@@ -2,7 +2,6 @@
 #include <random>
 #include <fstream>
 #include <sstream>
-#include <cmath>
 
 class Layer {
   public:
@@ -13,47 +12,14 @@ class Layer {
     std::vector<Number> dyin;
     const std::vector<Number>* x;
     size_t nx;
-    Number (*f)(Number&);
-    Number (*df)(Number&);
+    const act activation;
     std::vector<Number> dE_dz;
     std::vector<Number> dE_dx;
 
-    static Number f_bipolarSigmoid(Number& x){
-      return 2/(1+std::exp(-x)) - 1;
-    }
-
-    static Number df_bipolarSigmoid(Number& fx){
-      return 0.5*(1+fx)*(1-fx);
-    }
-
-    static Number f_binarySigmoid(Number& x){
-      return 1/(1+std::exp(-x));
-    }
-
-    static Number df_binarySigmoid(Number& fx){
-      return fx*(1-fx);
-    }
-
-    Layer(const size_t& nNeurons, const int& activation) : ny(nNeurons) {
+    Layer(const size_t& nNeurons, const act& activation) : ny(nNeurons), activation(activation) {
       this->y.resize(nNeurons);
       this->dyin.resize(nNeurons);
       this->dE_dz.resize(nNeurons);
-
-      switch (activation){
-        case 1:
-          f = f_bipolarSigmoid;
-          df = df_bipolarSigmoid;
-          break;
-
-        case 2:
-          f = f_binarySigmoid;
-          df = df_binarySigmoid;
-          break;
-        
-        default:
-          break;
-      }
-
     }
 
     void initWeights(const std::vector<Number>& vx){
@@ -77,19 +43,13 @@ class Layer {
         for(size_t i=0; i<nx; i++){
           c += (*x)[i] * w[i*ny+j];
         }
-        y[j] = f(c);
-        dyin[j] = df(y[j]);
+        y[j] = activation.f(c);
+        dyin[j] = activation.df(y[j]);
       }
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Layer& layer) {
         size_t n = layer.w.size();
-        // os << "nx: "<< layer.nx << " " << (*(layer.x)).size()<< "\n";
-        // os << "ny: "<< layer.ny << " "<< layer.y.size();
-        // os << "\nX: ";
-        // for (size_t i = 0; i < layer.nx; i++) {
-        //     os << (*(layer.x))[i] << " ";
-        // }
         os << "\nWeights: ";
         for (size_t i = 0; i < n-layer.ny; i++) {
             os << layer.w[i] << " ";
@@ -98,10 +58,7 @@ class Layer {
         for (size_t i = n - layer.ny; i < n; i++) {
             os << layer.w[i] << " ";
         }
-        // os << "\nY: ";
-        // for (size_t i = 0; i < layer.ny; i++) {
-        //     os << layer.y[i] << " ";
-        // }
+
         return os << "\n";
     }
 };
@@ -114,14 +71,20 @@ class MLP {
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
-    Number tolerance = 1e-6;
+    Number tolerance = 1e-4;
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
+    std::string (*classification)(Number&);
+    std::vector<Number> epochWinRate;
+    Number winRate;
+    size_t epoch; // Epoch needed to complete the training
 
   public: 
-    MLP(const std::vector<Sample>& samples, const std::vector<Sample>& vsamples) : samples(samples), vsamples(vsamples) { 
+    MLP(const std::vector<Sample>& samples, const std::vector<Sample>& vsamples, std::string(*classification)(Number&)) 
+        : samples(samples), vsamples(vsamples), classification(classification) { 
       epochError.resize(epochs);
+      epochWinRate.resize(epochs);
     }
 
     // methods
@@ -134,11 +97,6 @@ class MLP {
     void backPropagation(const std::vector<Number>& target){
       Layer* layer = &layers.back();
       Number errorYT, sum;
-
-      // dE_dy, calcular ele na ultima saida
-      // entra nas camadas, da ultima para a primeira
-      // Com o dE_dy, voce calcula o dE_dz
-      // Com o dE_dz, calcula o dE_dx
 
       // Last layer
       std::vector<Number>* dE_dy = &layer->y;
@@ -184,17 +142,28 @@ class MLP {
           biggerdw = std::max(layer.w_before[i], biggerdw);
         }
       }
+      for(Sample& sample : samples){
+        layers[0].x = &sample.x;
+        predict();
+        for(Number& out : layers.back().y){
+          if(classification(out)==sample.label){
+            winRate+=1;
+          }
+        }
+      }
+      winRate = winRate/(samples.size()*layers.back().y.size())*100;
     }
 
     void train(){
       initLayers();
 
-      for(size_t epoch = 0; epoch < epochs; epoch++){      
+      for(epoch = 0; epoch < epochs; epoch++){      
         for(Layer& layer : layers){
           layer.w_before = layer.w;
         }
         biggerdw = 0;
         mse = 0;
+        winRate = 0;
         for(size_t i = 0; i <samples.size(); i++){
           // FeedForward
           layers[0].x = &samples[i].x;
@@ -207,14 +176,18 @@ class MLP {
         }
         epochError[epoch] /= samples.size();
         validation();
-        if(biggerdw < tolerance){
+        epochWinRate[epoch] = winRate;
+        if(biggerdw <= tolerance){
           break;
         }
       }
+      std::cout << "Treinamento concluido apos " << epoch << " epocas.\n";
+      std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n\n";
+      
     }
 
     void initLayers(){
-      addLayer(Layer(samples[0].t.size(), 1));
+      addLayer(Layer(samples[0].t.size(), linear));
       layers[0].initWeights(samples[0].x);
       for(size_t i=1; i<layers.size(); i++){
         layers[i].initWeights(layers[i-1].y);
@@ -274,25 +247,22 @@ class MLP {
         layers[0].x = &sample.x;
         predict();
         std::cout << sample.x << "-> t: " << sample.t << "-> y: " << layers.back().y << "\n";
-        // showTrainedNetwork();
-        // std::cout << "*****************-----------------------\n";
       }
     }
 };
 
-// x
-// 3 neuronios
-// y
 
 int main() {
-  MLP network(samples,samples);
-  // network.showTrainingSamples();
-  network.addLayer(Layer(3,1));
-  network.addLayer(Layer(4,1));
+  MLP network(samples,samples,
+              [](Number& yi) -> std::string {
+                return (yi >= 0) ? "1" : "0";
+              });
+  // network.addLayer(Layer(3,bipolarSigmoid));
+  // network.addLayer(Layer(4,bipolarSigmoid));
   network.train();
-  network.exportNetwork();
+  // network.exportNetwork();
   network.showResults();
   std::cout << "-----------------------\n";
-  network.showTrainedNetwork();
+  // network.showTrainedNetwork();
   return 0;
 }

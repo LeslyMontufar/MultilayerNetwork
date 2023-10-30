@@ -29,7 +29,7 @@ uint32_t read_int_little(FILE *f) {
     return num;
 }
 
-int loadData(const char* imageFile, const char* labelFile, vector<Sample>& samples, Number zero_representation = 0) {
+int loadData(const char* imageFile, const char* labelFile, vector<Sample>& samples, const Number zero_representation = 0, const uint32_t nImages = 0) {
     FILE *fimage, *flabel;
     uint32_t (*read_int32)(FILE *);
     uint32_t nImageMNIST;
@@ -68,7 +68,12 @@ int loadData(const char* imageFile, const char* labelFile, vector<Sample>& sampl
     if (nImageMNIST != nLabel) {
         return -3;
     }
-    // std::cout << "Read: " << nLabel << std::endl;
+    
+    if(nImages){
+        nImageMNIST = nImages;
+        nLabel = nImages;
+    }
+
     mnist_w = read_int32(fimage);
     mnist_h = read_int32(fimage);
     mnist_im_size = mnist_h * mnist_w;

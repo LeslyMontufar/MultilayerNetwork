@@ -70,6 +70,16 @@ const act linear = {
   [](Number& ){return (Number)1;}
 };
 
+const act bipolarStep = {
+  [](Number& x){return (Number) ((x>=0)? 1:-1);},
+  [](Number& ){return (Number) 0;}
+};
+
+const act binaryStep = {
+  [](Number& x){return (Number) ((x>=0)? 1:0);},
+  [](Number& ){return (Number) 0;}
+};
+
 std::ostream& operator<<(std::ostream& os, const std::vector<Number>& v){
     for(const Number& value : v){
         os << value << " ";

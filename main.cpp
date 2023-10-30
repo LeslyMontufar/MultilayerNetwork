@@ -76,14 +76,17 @@ class MLP {
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
-    char (*classification)(Number&);
+    const act lastActivation;
+    char (*classification)(std::vector<Number>&);
     std::vector<Number> epochWinRate;
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
+    char labelPredicted;
 
   public: 
-    MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples, char(*classification)(Number&)) 
-        : samples(samples), vsamples(vsamples), classification(classification) { 
+    MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples, 
+        const act& lastActivation, char(*classification)(std::vector<Number>&)) 
+        : samples(samples), vsamples(vsamples), lastActivation(lastActivation), classification(classification) { 
       epochError.resize(epochs);
       epochWinRate.resize(epochs);
     }
@@ -146,10 +149,8 @@ class MLP {
       for(Sample& sample : samples){
         layers[0].x = &sample.x;
         predict();
-        for(Number& out : layers.back().y){
-          if(classification(out)==sample.label){
-            winRate+=1;
-          }
+        if(classification(layers.back().y)==sample.label){
+          winRate+=1;
         }
       }
       winRate = winRate/(samples.size()*layers.back().y.size())*100;
@@ -188,7 +189,7 @@ class MLP {
     }
 
     void initLayers(){
-      addLayer(Layer(samples[0].t.size(), linear));
+      addLayer(Layer(samples[0].t.size(), lastActivation));
       layers[0].initWeights(samples[0].x);
       for(size_t i=1; i<layers.size(); i++){
         layers[i].initWeights(layers[i-1].y);
@@ -249,18 +250,12 @@ class MLP {
       for(Sample& sample : vsamples){
         layers[0].x = &sample.x;
         predict();
-        std::cout << sample.x << "-> t: " << sample.t << "-> y: " << layers.back().y << "\n";
+        std::cout << sample.label << "-> t: " << sample.t << "\n\t-> y: " << layers.back().y << "\n";
       }
     }
 };
 
 int main() {
-  
-  // MLP network(samplesOR,samplesOR,
-              // [](Number& yi) -> char {
-              //   return (yi >= 0) ? '1' : '0';
-              // });
-
   const char *imageFile = "../input/train-images.idx3-ubyte";
   const char *labelFile = "../input/train-labels.idx1-ubyte";
 
@@ -268,23 +263,28 @@ int main() {
   const char *testLabelFile = "../input/t10k-labels.idx1-ubyte";
   
   std::vector<Sample> samples, vsamples;
-  std::cout << "Error: " << loadData(imageFile, labelFile, samples, 0) << "\n";
-  std::cout << "Error: " << loadData(testImageFile, testLabelFile, vsamples, 0) << "\n";
+  loadData(imageFile, labelFile, samples, 0, 10);
+  loadData(testImageFile, testLabelFile, vsamples, 0, 5);
   
-  MLP network(samples, vsamples, 
-              [](Number& yi) -> char {
-                return (yi >= 0) ? '1' : '0';
+  MLP network(samples, vsamples, binaryStep,
+              [](std::vector<Number>& y) -> char {
+                for(char i=0; i<(char)y.size(); i++){
+                  if(y[i]>=0){
+                    return i + '0';
+                  } 
+                } 
+                return 0;
               });
 
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
-  std::cout << samples[1];
+  // std::cout << samples[1];
   std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
-  std::cout << vsamples[1];
-  // network.addLayer(Layer(3,bipolarSigmoid));
-  // network.addLayer(Layer(4,bipolarSigmoid));
-  // network.train();
+  // std::cout << vsamples[1];
+  network.addLayer(Layer(3,bipolarSigmoid));
+  network.addLayer(Layer(4,bipolarSigmoid));
+  network.train();
   // // network.exportNetwork();
-  // network.showResults();
+  network.showResults();
   // std::cout << "-----------------------\n";
   // network.showTrainedNetwork();
   return 0;

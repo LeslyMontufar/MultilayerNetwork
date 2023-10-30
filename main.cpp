@@ -81,7 +81,6 @@ class MLP {
     std::vector<Number> epochWinRate;
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
-    char labelPredicted;
 
   public: 
     MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples, 
@@ -139,17 +138,21 @@ class MLP {
       }     
     }
 
-    void validation(){
+    void stopCondition(){
       for(Layer& layer : layers){
         for(size_t i=0; i<layer.w.size(); i++){
           layer.w_before[i] = std::abs(layer.w[i]-layer.w_before[i]);
           biggerdw = std::max(layer.w_before[i], biggerdw);
         }
       }
+    }
+
+    void validation(std::vector<Sample>& samples){
       for(Sample& sample : samples){
         layers[0].x = &sample.x;
         predict();
-        if(classification(layers.back().y)==sample.label){
+        sample.labelPredicted = classification(layers.back().y);
+        if(sample.labelPredicted == sample.label){
           winRate+=1;
         }
       }
@@ -177,7 +180,8 @@ class MLP {
           
         }
         epochError[epoch] /= samples.size();
-        validation();
+        stopCondition();
+        validation(samples);
         epochWinRate[epoch] = winRate;
         if(biggerdw <= tolerance){
           break;
@@ -246,12 +250,17 @@ class MLP {
 
     }
 
-    void showResults(){
-      for(Sample& sample : vsamples){
-        layers[0].x = &sample.x;
-        predict();
-        std::cout << sample.label << "-> t: " << sample.t << "\n\t-> y: " << layers.back().y << "\n";
+    void showResults(std::vector<Sample>& s){
+      validation(s);
+      std::cout << "Label: ";
+      for(const Sample& sample : s){
+        std::cout << sample.label << " ";
       }
+      std::cout << "\nLabel predicted: ";
+      for(const Sample& sample : s){
+        std::cout << sample.labelPredicted << " ";
+      }
+      std::cout << "\n";
     }
 };
 
@@ -277,14 +286,13 @@ int main() {
               });
 
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
-  // std::cout << samples[1];
   std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
-  // std::cout << vsamples[1];
+  
   network.addLayer(Layer(3,bipolarSigmoid));
   network.addLayer(Layer(4,bipolarSigmoid));
   network.train();
   // // network.exportNetwork();
-  network.showResults();
+  network.showResults(samples);
   // std::cout << "-----------------------\n";
   // network.showTrainedNetwork();
   return 0;

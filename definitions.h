@@ -13,6 +13,7 @@ class Sample {
     std::vector<Number> x;
     std::vector<Number> t;
     char label;
+    char labelPredicted;
 
     Sample(const std::vector<Number>& x, const std::vector<Number>& target, const char& label)
             : x(x), t(target), label(label) {}

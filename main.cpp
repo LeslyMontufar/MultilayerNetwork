@@ -31,7 +31,7 @@ class Layer {
 
       std::random_device rd;
       std::mt19937 gen(rd());
-      std::uniform_real_distribution<Number> dis(-0.5, 0.5);
+      std::uniform_real_distribution<Number> dis(-1./nx, 1./nx);
       for (Number& value : w) {
         value = dis(gen);
       }
@@ -156,13 +156,14 @@ class MLP {
           winRate+=1;
         }
       }
-      winRate = winRate/(samples.size()*layers.back().y.size())*100;
+      winRate = winRate/samples.size() *100;
     }
 
     void train(){
       initLayers();
 
       for(epoch = 0; epoch < epochs; epoch++){      
+        // std::cout << "Aqui\n";
         for(Layer& layer : layers){
           layer.w_before = layer.w;
         }
@@ -183,11 +184,12 @@ class MLP {
         stopCondition();
         validation(samples);
         epochWinRate[epoch] = winRate;
-        if(biggerdw <= tolerance){
+        if((biggerdw <= tolerance)){
+          // std::cout << "Bigger dw: " << biggerdw << "\n\n";
           break;
         }
       }
-      std::cout << "Treinamento concluido apos " << epoch << " epocas.\n";
+      std::cout << "Treinamento concluido apos " << epoch+1 << " epocas.\n";
       std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n\n";
       
     }
@@ -252,7 +254,7 @@ class MLP {
 
     void showResults(std::vector<Sample>& s){
       validation(s);
-      std::cout << "Label: ";
+      std::cout << "Label informed:  ";
       for(const Sample& sample : s){
         std::cout << sample.label << " ";
       }
@@ -275,7 +277,7 @@ int main() {
   loadData(imageFile, labelFile, samples, 0, 10);
   loadData(testImageFile, testLabelFile, vsamples, 0, 5);
   
-  MLP network(samples, vsamples, binaryStep,
+  MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
                 for(char i=0; i<(char)y.size(); i++){
                   if(y[i]>=0){
@@ -288,8 +290,7 @@ int main() {
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
   std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
   
-  network.addLayer(Layer(3,bipolarSigmoid));
-  network.addLayer(Layer(4,bipolarSigmoid));
+  network.addLayer(Layer(10,bipolarSigmoid));
   network.train();
   // // network.exportNetwork();
   network.showResults(samples);

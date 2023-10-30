@@ -1,4 +1,5 @@
 #include "definitions.h"
+#include "mnist.h"
 #include <random>
 #include <fstream>
 #include <sstream>
@@ -75,13 +76,13 @@ class MLP {
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
-    std::string (*classification)(Number&);
+    char (*classification)(Number&);
     std::vector<Number> epochWinRate;
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
 
   public: 
-    MLP(const std::vector<Sample>& samples, const std::vector<Sample>& vsamples, std::string(*classification)(Number&)) 
+    MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples, char(*classification)(Number&)) 
         : samples(samples), vsamples(vsamples), classification(classification) { 
       epochError.resize(epochs);
       epochWinRate.resize(epochs);
@@ -199,7 +200,9 @@ class MLP {
     }
 
     void showTrainingSamples(){
-      std::cout << samples;
+      for(Sample& sample : samples){
+        std::cout << sample;
+      }
     }
 
     void showTrainedNetwork(){
@@ -251,18 +254,38 @@ class MLP {
     }
 };
 
-
 int main() {
-  MLP network(samples,samples,
-              [](Number& yi) -> std::string {
-                return (yi >= 0) ? "1" : "0";
+  
+  // MLP network(samplesOR,samplesOR,
+              // [](Number& yi) -> char {
+              //   return (yi >= 0) ? '1' : '0';
+              // });
+
+  const char *imageFile = "../input/train-images.idx3-ubyte";
+  const char *labelFile = "../input/train-labels.idx1-ubyte";
+
+  const char *testImageFile = "../input/t10k-images.idx3-ubyte";
+  const char *testLabelFile = "../input/t10k-labels.idx1-ubyte";
+  
+  std::vector<Sample> samples, vsamples;
+  std::cout << "Error: " << loadData(imageFile, labelFile, samples, 0) << "\n";
+  std::cout << "Error: " << loadData(testImageFile, testLabelFile, vsamples, 0) << "\n";
+  
+  MLP network(samples, vsamples, 
+              [](Number& yi) -> char {
+                return (yi >= 0) ? '1' : '0';
               });
+
+  std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
+  std::cout << samples[1];
+  std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
+  std::cout << vsamples[1];
   // network.addLayer(Layer(3,bipolarSigmoid));
   // network.addLayer(Layer(4,bipolarSigmoid));
-  network.train();
-  // network.exportNetwork();
-  network.showResults();
-  std::cout << "-----------------------\n";
+  // network.train();
+  // // network.exportNetwork();
+  // network.showResults();
+  // std::cout << "-----------------------\n";
   // network.showTrainedNetwork();
   return 0;
 }

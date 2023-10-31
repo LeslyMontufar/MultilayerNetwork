@@ -72,7 +72,7 @@ class MLP {
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
-    Number tolerance = 1e-4;
+    Number tolerance = 1e-6;
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
@@ -159,11 +159,22 @@ class MLP {
       winRate = winRate/samples.size() *100;
     }
 
+    void progressBar(const int& percent, const int& win){
+        std::cout << "\r[";
+        for (int i = 0; i < percent; i++) {
+          std::cout << char(254); 
+        }
+        for(int i=percent; i<100; i++) {
+          std::cout << " ";
+        }
+        std::cout << "] " << percent << "% "<< win << "%";
+        std::cout.flush();
+    }
+
     void train(){
       initLayers();
-
-      for(epoch = 0; epoch < epochs; epoch++){      
-        // std::cout << "Aqui\n";
+      std::cout << "\n";
+      for(epoch = 0; epoch < epochs; epoch++){    
         for(Layer& layer : layers){
           layer.w_before = layer.w;
         }
@@ -184,13 +195,14 @@ class MLP {
         stopCondition();
         validation(samples);
         epochWinRate[epoch] = winRate;
-        if((biggerdw <= tolerance)){
-          // std::cout << "Bigger dw: " << biggerdw << "\n\n";
+        progressBar((epoch/(Number)epochs)*100, winRate);
+        if((biggerdw <= tolerance) && (winRate>80)){
           break;
         }
+        
       }
-      std::cout << "Treinamento concluido apos " << epoch+1 << " epocas.\n";
-      std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n\n";
+      std::cout << "\n\nTreinamento concluido apos " << epoch << " epocas.\n"; //sem +1
+      std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch-1] << "\n\n";
       
     }
 
@@ -270,12 +282,12 @@ int main() {
   const char *imageFile = "../input/train-images.idx3-ubyte";
   const char *labelFile = "../input/train-labels.idx1-ubyte";
 
-  const char *testImageFile = "../input/t10k-images.idx3-ubyte";
-  const char *testLabelFile = "../input/t10k-labels.idx1-ubyte";
+  // const char *testImageFile = "../input/t10k-images.idx3-ubyte";
+  // const char *testLabelFile = "../input/t10k-labels.idx1-ubyte";
   
   std::vector<Sample> samples, vsamples;
-  loadData(imageFile, labelFile, samples, 0, 10);
-  loadData(testImageFile, testLabelFile, vsamples, 0, 5);
+  loadData(imageFile, labelFile, samples, 0, 100);
+  // loadData(testImageFile, testLabelFile, vsamples, 0, 5);
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
@@ -288,12 +300,12 @@ int main() {
               });
 
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
-  std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
+  // std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
   
   network.addLayer(Layer(10,bipolarSigmoid));
   network.train();
   // // network.exportNetwork();
-  network.showResults(samples);
+  // network.showResults(samples);
   // std::cout << "-----------------------\n";
   // network.showTrainedNetwork();
   return 0;

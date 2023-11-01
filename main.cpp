@@ -83,7 +83,6 @@ class MLP {
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
-    Number tolerance = 1e-2;
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
@@ -163,16 +162,6 @@ class MLP {
       }     
     }
 
-    void stopCondition(){
-#pragma omp parallel for reduction(max:biggerdw)
-      for(Layer& layer : layers){
-        for(size_t i=0; i<layer.w.size(); i++){
-          layer.w_before[i] = std::abs(layer.w[i]-layer.w_before[i]);
-          biggerdw = std::max(layer.w_before[i], biggerdw);
-        }
-      }
-    }
-
     void validation(std::vector<Sample>& samples){
 #if USE_OMP
 #pragma omp parallel for
@@ -184,7 +173,6 @@ class MLP {
         if(sample.labelPredicted == sample.label){
           winRate+=1;
         }
-        // confusionTable[(sample.label-'0')*10 + sample.labelPredicted - '0'] += 1;
       }
       winRate = winRate/samples.size() *100;
     }
@@ -222,12 +210,6 @@ class MLP {
       initLayers();
       std::cout << "\n";
       for(epoch = 0; epoch < epochs; epoch++){ 
-
-// #pragma omp parallel for
-//         for(Layer& layer : layers){
-//           layer.w_before = layer.w;
-//         }
-//         biggerdw = 0;
         mse = 0;
         winRate = 0;
         for(size_t i = 0; i < nsamples; i++){
@@ -242,12 +224,11 @@ class MLP {
           
         }
         epochError[epoch] /= nsamples;
-        // stopCondition();
         validation(samples);
         epochWinRate[epoch] = winRate;
-        // progressBar((epoch/(Number)epochs)*100, winRate);
-        std::cout << winRate << "%";
-        if(winRate>=100){ // tirei a condicao com tolerancia
+
+        std::cout << (int) winRate << "%";
+        if(winRate>=100){ // lembrar de anotar quanto deu a MSE final, para coloca-la como condicao
           break;
         }
         

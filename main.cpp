@@ -79,7 +79,7 @@ class MLP {
   private:
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 50000;
+    size_t epochs = 200;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
@@ -213,7 +213,7 @@ class MLP {
         mse = 0;
         winRate = 0;
         for(size_t i = 0; i < nsamples; i++){
-          progressBar((epoch/(Number)epochs)*100, i/(Number) nsamples *100);
+          progressBar(((epoch+1)/(Number)epochs)*100, (i+1)/(Number) nsamples *100);
           // FeedForward
           layers[0].x = &samples[i].x;
           predict();
@@ -231,11 +231,41 @@ class MLP {
         if(winRate>=100){ // lembrar de anotar quanto deu a MSE final, para coloca-la como condicao
           break;
         }
-        
+        else if((int)winRate > (int)epochWinRate[epoch-1]){
+          if(winRate>=99){
+            updateMe();
+          } 
+          else if(winRate>=98){
+            updateMe();
+          }
+          else if(winRate>=97){
+            updateMe();
+            break;
+          }
+          else if(winRate>=96){
+            updateMe();
+          }
+          else if(winRate>=95){
+            updateMe();
+          }
+          else if(winRate==92){
+            updateMe();
+          }
+        }
       }
       std::cout << "\n\nTreinamento concluido apos " << epoch << " epocas.\n"; //sem +1
       std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch-1] << "\n\n";
       
+    }
+
+    void updateMe(){
+        std::cout << "\n\n";
+        showResults(samples);
+        std::cout << "\n\n";
+        showResults(vsamples);
+        std::cout << "\n\n";
+        exportNetwork();
+        std::cout << "\n\n";
     }
 
     void initLayers(){
@@ -304,7 +334,7 @@ class MLP {
           winRate+=1;
         }
         confusionTable[(sample->label-'0')*10 + sample->labelPredicted - '0'] += 1;
-        progressBarSample(i/(Number)ssize*100, winRate/ssize * 100);
+        progressBarSample((i+1)/(Number)ssize*100, winRate/ssize * 100);
       }
       std::cout << "\n";
 
@@ -328,7 +358,7 @@ int main() {
   
   std::vector<Sample> samples, vsamples;
   std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 0) << "\n";
-  std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 0) << "\n";
+  std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, -1, 0) << "\n";
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {

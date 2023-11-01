@@ -1,20 +1,26 @@
-const jsonFileName = "trainedNetwork.json";
+const fs = require('fs');
 
-        // Função para carregar e exibir o conteúdo JSON
-        function loadAndDisplayJSON(fileName) {
-            const jsonDataDisplay = document.getElementById("jsonDataDisplay");
+const nomeDoArquivo = 'trainedNetwork.json';
 
-            // Requisição para carregar o arquivo JSON
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", fileName, true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    const jsonData = JSON.parse(xhr.responseText);
-                    jsonDataDisplay.innerText = JSON.stringify(jsonData, null, 2);
-                }
-            };
-            xhr.send();
-        }
+fs.readFile(nomeDoArquivo, 'utf8', (err, data) => {
+  if (err) {
+    console.error(`Erro ao ler o arquivo ${nomeDoArquivo}: ${err}`);
+    return;
+  }
 
-        // Carregar e exibir o JSON
-        loadAndDisplayJSON(jsonFileName);
+  const objetoJSON = JSON.parse(data);
+
+  // Acesse a matriz "weights" no objeto JSON
+  const weights = objetoJSON.weights;
+
+  // Agora você pode realizar cálculos com a matriz "weights"
+  // Exemplo: Calcule a soma de todos os valores na matriz
+  let soma = 0;
+  for (let i = 0; i < weights.length; i++) {
+    for (let j = 0; j < weights[i].length; j++) {
+      soma += weights[i][j];
+    }
+  }
+
+  console.log('Soma de todos os valores em "weights":', soma);
+});

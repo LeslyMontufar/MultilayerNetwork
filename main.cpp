@@ -3,6 +3,10 @@
 #include <random>
 #include <fstream>
 #include <sstream>
+#include <omp.h>
+#include <chrono> 
+
+#define USE_OMP 1
 
 class Layer {
   public:
@@ -32,6 +36,10 @@ class Layer {
       std::random_device rd;
       std::mt19937 gen(rd());
       std::uniform_real_distribution<Number> dis(-1./nx, 1./nx);
+
+#if USE_OMP
+#pragma omp parallel for
+#endif
       for (Number& value : w) {
         value = dis(gen);
       }
@@ -41,6 +49,9 @@ class Layer {
       Number c;
       for(size_t j=0; j<ny; j++){
         c = w[nx*ny+j];
+#if USE_OMP
+#pragma omp parallel for reduction(+ : c) 
+#endif
         for(size_t i=0; i<nx; i++){
           c += (*x)[i] * w[i*ny+j];
         }
@@ -68,11 +79,11 @@ class MLP {
   private:
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 10000;
+    size_t epochs = 100000;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
-    Number tolerance = 1e-6;
+    Number tolerance = 1e-2;
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
     Number biggerdw;
@@ -92,6 +103,9 @@ class MLP {
 
     // methods
     void predict(){
+#if USE_OMP
+#pragma omp parallel for
+#endif
       for(size_t i=0; i<layers.size(); i++){
         layers[i].calculateOut();
       }
@@ -104,6 +118,7 @@ class MLP {
       // Last layer
       std::vector<Number>* dE_dy = &layer->y;
 
+#pragma omp parralel for reduction(+ : mse) private(errorYT)
       for(size_t j=0; j<layer->ny; j++){
         errorYT = layer->y[j]-target[j];
         (*dE_dy)[j] = errorYT;
@@ -114,6 +129,9 @@ class MLP {
       for(int l=layers.size()-1; l>=0; l--){
         layer = &layers[l];
         sum = 0;
+#if USE_OMP
+#pragma omp parallel for
+#endif
         for(size_t j=0; j<layer->ny; j++){
           layer->dE_dz[j] = layer->dyin[j] * (*dE_dy)[j];
         }
@@ -121,6 +139,9 @@ class MLP {
         // dE_dx = dz_dx * dE_dz = w * dE_dz, w sem o b
         for(size_t i=0; i<layer->nx; i++){
           sum = 0;
+#if USE_OMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
           for(size_t j=0; j<layer->ny; j++){
             sum += layer->w[i*layer->ny+j]*layer->dE_dz[j];
           }
@@ -130,6 +151,8 @@ class MLP {
         dE_dy = &layer->dE_dx;
 
         for(size_t j=0; j<layer->ny; j++){
+
+#pragma omp parallel for
           for(size_t i=0; i<layer->nx; i++){
             layer->w[i*layer->ny+j] -= alpha * (*(layer->x))[i] * layer->dE_dz[j];
           }
@@ -139,6 +162,7 @@ class MLP {
     }
 
     void stopCondition(){
+#pragma omp parallel for reduction(max:biggerdw)
       for(Layer& layer : layers){
         for(size_t i=0; i<layer.w.size(); i++){
           layer.w_before[i] = std::abs(layer.w[i]-layer.w_before[i]);
@@ -148,6 +172,9 @@ class MLP {
     }
 
     void validation(std::vector<Sample>& samples){
+#if USE_OMP
+#pragma omp parallel for
+#endif
       for(Sample& sample : samples){
         layers[0].x = &sample.x;
         predict();
@@ -161,10 +188,10 @@ class MLP {
 
     void progressBar(const int& percent, const int& win){
         std::cout << "\r[";
-        for (int i = 0; i < percent; i++) {
+        for (int i = 0; i < win; i++) {
           std::cout << char(254); 
         }
-        for(int i=percent; i<100; i++) {
+        for(int i=win; i<100; i++) {
           std::cout << " ";
         }
         std::cout << "] " << percent << "% "<< win << "%";
@@ -174,7 +201,10 @@ class MLP {
     void train(){
       initLayers();
       std::cout << "\n";
-      for(epoch = 0; epoch < epochs; epoch++){    
+      for(epoch = 0; epoch < epochs; epoch++){ 
+#if USE_OMP
+#pragma omp parallel for
+#endif  
         for(Layer& layer : layers){
           layer.w_before = layer.w;
         }
@@ -196,7 +226,7 @@ class MLP {
         validation(samples);
         epochWinRate[epoch] = winRate;
         progressBar((epoch/(Number)epochs)*100, winRate);
-        if((biggerdw <= tolerance) && (winRate>80)){
+        if((biggerdw <= tolerance) && (winRate>90)){
           break;
         }
         
@@ -253,7 +283,7 @@ class MLP {
       json << "]\n";
       json << "}\n";
 
-      std::ofstream file("../front-end/trainedNetwork.json");
+      std::ofstream file("front-end/trainedNetwork.json");
       if (file.is_open()) {
         file << json.str();
         file.close();
@@ -267,10 +297,12 @@ class MLP {
     void showResults(std::vector<Sample>& s){
       validation(s);
       std::cout << "Label informed:  ";
+#pragma omp parallel for
       for(const Sample& sample : s){
         std::cout << sample.label << " ";
       }
       std::cout << "\nLabel predicted: ";
+#pragma omp parallel for
       for(const Sample& sample : s){
         std::cout << sample.labelPredicted << " ";
       }
@@ -279,15 +311,15 @@ class MLP {
 };
 
 int main() {
-  const char *imageFile = "../input/train-images.idx3-ubyte";
-  const char *labelFile = "../input/train-labels.idx1-ubyte";
-
-  // const char *testImageFile = "../input/t10k-images.idx3-ubyte";
-  // const char *testLabelFile = "../input/t10k-labels.idx1-ubyte";
+  
+  const char *imageFile = "input/train-images.idx3-ubyte";
+  const char *labelFile = "input/train-labels.idx1-ubyte";
+  const char *testImageFile = "input/t10k-images.idx3-ubyte";
+  const char *testLabelFile = "input/t10k-labels.idx1-ubyte";
   
   std::vector<Sample> samples, vsamples;
-  loadData(imageFile, labelFile, samples, 0, 100);
-  // loadData(testImageFile, testLabelFile, vsamples, 0, 5);
+  std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 100) << "\n";
+  // std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 5) << "\n";
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
@@ -302,11 +334,17 @@ int main() {
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
   // std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
   
-  network.addLayer(Layer(10,bipolarSigmoid));
+  network.addLayer(Layer(100,bipolarSigmoid));
+  
+  auto start_time = std::chrono::high_resolution_clock::now(); 
   network.train();
-  // // network.exportNetwork();
-  // network.showResults(samples);
-  // std::cout << "-----------------------\n";
-  // network.showTrainedNetwork();
+  auto end_time = std::chrono::high_resolution_clock::now(); 
+  
+  std::chrono::duration<double> duration = end_time - start_time; 
+  std::cout << "Training finished after " << duration.count() <<" seconds\n\n";
+  
+  network.showResults(samples);
+  std::cout << "\n\n";
+  // network.exportNetwork();
   return 0;
 }

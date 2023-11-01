@@ -10,8 +10,8 @@ fetch('data.json') // Substitua pela URL correta do seu arquivo JSON
   const jsonData = data;
 
   // Exiba os dados na página
-  const resultado = document.getElementById('resultado');
-  resultado.textContent = JSON.stringify(jsonData, null, 2);
+//   const resultado = document.getElementById('resultado');
+//   resultado.textContent = JSON.stringify(jsonData, null, 2);
 
   // Calcule a soma dos elementos em "weights"
   const weights = jsonData.weights;

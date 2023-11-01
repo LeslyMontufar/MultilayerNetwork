@@ -79,7 +79,7 @@ class MLP {
   private:
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 200;
+    size_t epochs = 50;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
@@ -166,6 +166,7 @@ class MLP {
 #if USE_OMP
 #pragma omp parallel for
 #endif
+      winRate = 0;
       for(Sample& sample : samples){
         layers[0].x = &sample.x;
         predict();
@@ -211,7 +212,7 @@ class MLP {
       std::cout << "\n";
       for(epoch = 0; epoch < epochs; epoch++){ 
         mse = 0;
-        winRate = 0;
+        // winRate = 0;
         for(size_t i = 0; i < nsamples; i++){
           progressBar(((epoch+1)/(Number)epochs)*100, (i+1)/(Number) nsamples *100);
           // FeedForward

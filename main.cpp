@@ -79,7 +79,7 @@ class MLP {
   private:
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 100000;
+    size_t epochs = 50000;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
@@ -92,6 +92,7 @@ class MLP {
     std::vector<Number> epochWinRate;
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
+    std::vector<int> confusionTable;
 
   public: 
     MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples, 
@@ -99,6 +100,7 @@ class MLP {
         : samples(samples), vsamples(vsamples), lastActivation(lastActivation), classification(classification) { 
       epochError.resize(epochs);
       epochWinRate.resize(epochs);
+      confusionTable.resize(100);
     }
 
     // methods
@@ -151,7 +153,6 @@ class MLP {
         dE_dy = &layer->dE_dx;
 
         for(size_t j=0; j<layer->ny; j++){
-
 #pragma omp parallel for
           for(size_t i=0; i<layer->nx; i++){
             layer->w[i*layer->ny+j] -= alpha * (*(layer->x))[i] * layer->dE_dz[j];
@@ -182,15 +183,18 @@ class MLP {
         if(sample.labelPredicted == sample.label){
           winRate+=1;
         }
+        confusionTable[(sample.label-'0')*10 + sample.labelPredicted - '0'] += 1;
       }
       winRate = winRate/samples.size() *100;
     }
 
     void progressBar(const int& percent, const int& win){
         std::cout << "\r[";
+#pragma omp parallel for
         for (int i = 0; i < win; i++) {
           std::cout << char(254); 
         }
+#pragma omp parallel for
         for(int i=win; i<100; i++) {
           std::cout << " ";
         }
@@ -202,13 +206,12 @@ class MLP {
       initLayers();
       std::cout << "\n";
       for(epoch = 0; epoch < epochs; epoch++){ 
-#if USE_OMP
-#pragma omp parallel for
-#endif  
-        for(Layer& layer : layers){
-          layer.w_before = layer.w;
-        }
-        biggerdw = 0;
+
+// #pragma omp parallel for
+//         for(Layer& layer : layers){
+//           layer.w_before = layer.w;
+//         }
+//         biggerdw = 0;
         mse = 0;
         winRate = 0;
         for(size_t i = 0; i <samples.size(); i++){
@@ -222,11 +225,11 @@ class MLP {
           
         }
         epochError[epoch] /= samples.size();
-        stopCondition();
+        // stopCondition();
         validation(samples);
         epochWinRate[epoch] = winRate;
         progressBar((epoch/(Number)epochs)*100, winRate);
-        if((biggerdw <= tolerance) && (winRate>90)){
+        if(winRate>=100){ // tirei a condicao com tolerancia
           break;
         }
         
@@ -239,6 +242,7 @@ class MLP {
     void initLayers(){
       addLayer(Layer(samples[0].t.size(), lastActivation));
       layers[0].initWeights(samples[0].x);
+#pragma omp parallel for
       for(size_t i=1; i<layers.size(); i++){
         layers[i].initWeights(layers[i-1].y);
       }
@@ -246,18 +250,6 @@ class MLP {
     
     void addLayer(const Layer& layer){
       layers.push_back(layer);
-    }
-
-    void showTrainingSamples(){
-      for(Sample& sample : samples){
-        std::cout << sample;
-      }
-    }
-
-    void showTrainedNetwork(){
-      for(const Layer& layer : layers) {
-        std::cout << layer << "\n";
-      }
     }
 
     void exportNetwork(){
@@ -295,31 +287,33 @@ class MLP {
     }
 
     void showResults(std::vector<Sample>& s){
-      validation(s);
-      std::cout << "Label informed:  ";
 #pragma omp parallel for
-      for(const Sample& sample : s){
-        std::cout << sample.label << " ";
+      for(int& c : confusionTable){
+        c = 0;
       }
-      std::cout << "\nLabel predicted: ";
+      validation(s);
+
+      for(int i=0; i<10; i++){
+        std::cout << i << ": ";
 #pragma omp parallel for
-      for(const Sample& sample : s){
-        std::cout << sample.labelPredicted << " ";
+        for(int j=0; j<10; j++){
+          std::cout << confusionTable[i*10+j] << " ";
+        }
+        std::cout << "\n";
       }
       std::cout << "\n";
     }
 };
 
 int main() {
-  
   const char *imageFile = "input/train-images.idx3-ubyte";
   const char *labelFile = "input/train-labels.idx1-ubyte";
   const char *testImageFile = "input/t10k-images.idx3-ubyte";
   const char *testLabelFile = "input/t10k-labels.idx1-ubyte";
   
   std::vector<Sample> samples, vsamples;
-  std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 100) << "\n";
-  // std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 5) << "\n";
+  std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 0) << "\n";
+  std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 5) << "\n";
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
@@ -332,7 +326,7 @@ int main() {
               });
 
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
-  // std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
+  std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
   
   network.addLayer(Layer(100,bipolarSigmoid));
   
@@ -345,6 +339,8 @@ int main() {
   
   network.showResults(samples);
   std::cout << "\n\n";
-  // network.exportNetwork();
+  network.showResults(vsamples);
+  std::cout << "\n\n";
+  network.exportNetwork();
   return 0;
 }

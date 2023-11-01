@@ -105,9 +105,10 @@ class MLP {
 
     // methods
     void predict(){
-#if USE_OMP
-#pragma omp parallel for
-#endif
+// #if USE_OMP
+// #pragma omp parallel for
+// #endif
+// um depende do resultado do anterior, apesar da referencia nao mudar
       for(size_t i=0; i<layers.size(); i++){
         layers[i].calculateOut();
       }
@@ -183,26 +184,41 @@ class MLP {
         if(sample.labelPredicted == sample.label){
           winRate+=1;
         }
-        confusionTable[(sample.label-'0')*10 + sample.labelPredicted - '0'] += 1;
+        // confusionTable[(sample.label-'0')*10 + sample.labelPredicted - '0'] += 1;
       }
       winRate = winRate/samples.size() *100;
     }
 
-    void progressBar(const int& percent, const int& win){
+    void progressBar(const int& epochPercent, const int& samplePercent){
         std::cout << "\r[";
 #pragma omp parallel for
-        for (int i = 0; i < win; i++) {
+        for (int i = 0; i < samplePercent; i++) {
           std::cout << char(254); 
         }
 #pragma omp parallel for
-        for(int i=win; i<100; i++) {
+        for(int i=samplePercent; i<100; i++) {
           std::cout << " ";
         }
-        std::cout << "] " << percent << "% "<< win << "%";
+        std::cout << "] " << epochPercent << "% " << samplePercent << "% ";
+        std::cout.flush();
+    }
+
+    void progressBarSample(const int& samplePercent, const int& win){
+        std::cout << "\r[";
+#pragma omp parallel for
+        for (int i = 0; i < samplePercent; i++) {
+          std::cout << char(254); 
+        }
+#pragma omp parallel for
+        for(int i=samplePercent; i<100; i++) {
+          std::cout << " ";
+        }
+        std::cout << "] " << samplePercent << "% " << win << "% ";
         std::cout.flush();
     }
 
     void train(){
+      size_t nsamples = samples.size();
       initLayers();
       std::cout << "\n";
       for(epoch = 0; epoch < epochs; epoch++){ 
@@ -214,7 +230,8 @@ class MLP {
 //         biggerdw = 0;
         mse = 0;
         winRate = 0;
-        for(size_t i = 0; i <samples.size(); i++){
+        for(size_t i = 0; i < nsamples; i++){
+          progressBar((epoch/(Number)epochs)*100, i/(Number) nsamples *100);
           // FeedForward
           layers[0].x = &samples[i].x;
           predict();
@@ -224,11 +241,12 @@ class MLP {
           epochError[epoch] += mse;
           
         }
-        epochError[epoch] /= samples.size();
+        epochError[epoch] /= nsamples;
         // stopCondition();
         validation(samples);
         epochWinRate[epoch] = winRate;
-        progressBar((epoch/(Number)epochs)*100, winRate);
+        // progressBar((epoch/(Number)epochs)*100, winRate);
+        std::cout << winRate << "%";
         if(winRate>=100){ // tirei a condicao com tolerancia
           break;
         }
@@ -291,7 +309,23 @@ class MLP {
       for(int& c : confusionTable){
         c = 0;
       }
-      validation(s);
+      // validation com progress bar
+#pragma omp parallel for
+      winRate = 0;
+      Sample* sample;
+      size_t ssize = s.size();
+      for(size_t i=0; i<ssize; i++){
+        sample = &s[i];
+        layers[0].x = &sample->x;
+        predict();
+        sample->labelPredicted = classification(layers.back().y);
+        if(sample->labelPredicted == sample->label){
+          winRate+=1;
+        }
+        confusionTable[(sample->label-'0')*10 + sample->labelPredicted - '0'] += 1;
+        progressBarSample(i/(Number)ssize*100, winRate/ssize * 100);
+      }
+      std::cout << "\n";
 
       for(int i=0; i<10; i++){
         std::cout << i << ": ";
@@ -313,7 +347,7 @@ int main() {
   
   std::vector<Sample> samples, vsamples;
   std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 0) << "\n";
-  std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 5) << "\n";
+  std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, 0, 0) << "\n";
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
@@ -328,6 +362,7 @@ int main() {
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
   std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
   
+  network.addLayer(Layer(100,bipolarSigmoid));
   network.addLayer(Layer(100,bipolarSigmoid));
   
   auto start_time = std::chrono::high_resolution_clock::now(); 

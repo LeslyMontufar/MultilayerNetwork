@@ -1,20 +1,20 @@
-const fs = require('fs');
-
-const nomeDoArquivo = 'trainedNetwork.json';
-
-fs.readFile(nomeDoArquivo, 'utf8', (err, data) => {
-  if (err) {
-    console.error(`Erro ao ler o arquivo ${nomeDoArquivo}: ${err}`);
-    return;
+fetch('data.json') // Substitua pela URL correta do seu arquivo JSON
+.then(response => {
+  if (!response.ok) {
+    throw new Error('Não foi possível ler o arquivo JSON.');
   }
+  return response.json();
+})
+.then(data => {
+  // Armazene os dados em uma variável JavaScript
+  const jsonData = data;
 
-  const objetoJSON = JSON.parse(data);
+  // Exiba os dados na página
+  const resultado = document.getElementById('resultado');
+  resultado.textContent = JSON.stringify(jsonData, null, 2);
 
-  // Acesse a matriz "weights" no objeto JSON
-  const weights = objetoJSON.weights;
-
-  // Agora você pode realizar cálculos com a matriz "weights"
-  // Exemplo: Calcule a soma de todos os valores na matriz
+  // Calcule a soma dos elementos em "weights"
+  const weights = jsonData.weights;
   let soma = 0;
   for (let i = 0; i < weights.length; i++) {
     for (let j = 0; j < weights[i].length; j++) {
@@ -22,5 +22,10 @@ fs.readFile(nomeDoArquivo, 'utf8', (err, data) => {
     }
   }
 
-  console.log('Soma de todos os valores em "weights":', soma);
+  // Exiba a soma no HTML
+  const somaElement = document.getElementById('soma');
+  somaElement.textContent = soma;
+})
+.catch(error => {
+  console.error('Erro: ' + error.message);
 });

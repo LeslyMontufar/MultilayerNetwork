@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Desenhar na Matriz 28x28</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 560px; /* Define a largura da tabela (28 células de 20px cada) */
+      height: 560px; /* Define a altura da tabela (28 células de 20px cada) */
+    }
+    td {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #000;
+    }
+  </style>
+  <script src="w.js"></script>
+</head>
+<body>
+  <h1>Desenhar na Matriz 28x28</h1>
+  <table>
+    <tbody id="matriz"></tbody>
+  </table>
+  <button id="limpar">Limpar</button>
+  <button id="predict">Predict</button>
+  <p>Soma dos Valores em x: <span id="somaResultado"></span></p>
+
+  <script>
+    const matrizElement = document.getElementById('matriz');
+    const limparButton = document.getElementById('limpar');
+    const predictButton = document.getElementById('predict');
+    const somaResultadoSpan = document.getElementById('somaResultado');
+
+    const matriz = new Array(28).fill(0).map(() => new Array(28).fill(0));
+
+    let desenhando = false;
+
+    function toggleDesenho(event) {
+      desenhando = !desenhando;
+      if (desenhando) {
+        event.target.style.backgroundColor = 'black';
+      }
+    }
+
+    function desenhar(event) {
+      if (desenhando) {
+        event.target.style.backgroundColor = 'black';
+        const rowIndex = event.target.parentNode.rowIndex;
+        const cellIndex = event.target.cellIndex;
+        matriz[rowIndex][cellIndex] = 1;
+      }
+    }
+
+    function concatenaMatriz() {
+      const resultado = [];
+      for (let i = 0; i < 28; i++) {
+        resultado.push(...matriz[i]);
+      }
+      return resultado;
+    }
+
+    matrizElement.addEventListener('mousedown', () => (desenhando = true));
+    matrizElement.addEventListener('mouseover', desenhar);
+    document.addEventListener('mouseup', () => (desenhando = false));
+
+    limparButton.addEventListener('click', () => {
+      matrizElement.innerHTML = '';
+      matriz.forEach(() => {
+        const row = document.createElement('tr');
+        for (let j = 0; j < 28; j++) {
+          const cell = document.createElement('td');
+          cell.style.backgroundColor = 'white';
+          row.appendChild(cell);
+        }
+        matrizElement.appendChild(row);
+      });
+      matriz.forEach((row) => row.fill(0));
+    });
+
+    function calculateOut(x, layer_w){
+        const nx = x.length;
+        const ny = layer_w/(nx+1);
+        let c = 0;
+        let y = [];
+        for(let j=0; j<ny; j++){
+            c = w[nx*ny+j];
+            for(let i=0; i<nx; i++){
+                c += x[i] * w[i*ny+j];
+            }
+            y.push(c);
+        }
+        return y;
+    }
+
+    function zeros(n) {
+        const lista = [];
+        for (let i = 0; i < n; i++) {
+            lista.push(0);
+        }
+        return lista;
+    }
+
+    // 28*28 w 100
+    // 100 100
+    // 100 10
+    function predict(x) {
+        for(let i in w){
+            y = calculateOut(x, w[i]);
+            x = y;
+        }
+        for(let i in y){
+            if(y[i] >= 0){
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    predictButton.addEventListener('click', () => {
+      const x = concatenaMatriz();
+      let soma = 0;
+      for(let xx of x){
+        soma += xx;
+      }
+
+
+      somaResultadoSpan.textContent = predict(x);
+    });
+  </script>
+</body>
+</html>

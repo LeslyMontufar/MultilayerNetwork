@@ -1,62 +1,898 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Desenhar na Matriz 28x28</title>
-  <style>
-    table {
-      border-collapse: collapse;
-      width: 560px; /* Define a largura da tabela (28 células de 20px cada) */
-      height: 560px; /* Define a altura da tabela (28 células de 20px cada) */
-    }
-    td {
-      width: 20px;
-      height: 20px;
-      border: 1px solid #000;
-    }
-  </style>
-  <script src="w.js"></script>
+    <title>Desenhar na Matriz 28x28</title>
+    <style>
+        table {
+            border: 1px solid #000;
+            border-collapse: collapse;
+            width: 560px; /* Define a largura da tabela (28 células de 20px cada) */
+            height: 560px; /* Define a altura da tabela (28 células de 20px cada) */
+        }
+
+        td {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+    <script src="w.js"></script>
 </head>
 <body>
-  <h1>Desenhar na Matriz 28x28</h1>
-  <table>
-    <tbody id="matriz"></tbody>
-  </table>
-  <button id="limpar">Limpar</button>
-  <button id="predict">Predict</button>
-  <p>Soma dos Valores em x: <span id="somaResultado"></span></p>
+<h1>Desenhar na Matriz 28x28</h1>
+<table>
+    <!--    <tbody id="matriz"></tbody>-->
+    <tbody id="matriz">
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    <tr>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+        <td style="background-color: white;"></td>
+    </tr>
+    </tbody>
 
-  <script>
+</table>
+<button id="limpar">Limpar</button>
+<button id="predict">Predict</button>
+<p>Predicao: <span id="prediction"></span></p>
+
+<script>
     const matrizElement = document.getElementById('matriz');
     const limparButton = document.getElementById('limpar');
     const predictButton = document.getElementById('predict');
-    const somaResultadoSpan = document.getElementById('somaResultado');
+    const predictionSpan = document.getElementById('prediction');
 
-    const matriz = new Array(28).fill(0).map(() => new Array(28).fill(0));
+    const matriz = new Array(784).fill(0);//.map(() => new Array(28).fill(0));
 
     let desenhando = false;
 
     function toggleDesenho(event) {
-      desenhando = !desenhando;
-      if (desenhando) {
-        event.target.style.backgroundColor = 'black';
-      }
+        desenhando = !desenhando;
+        if (desenhando) {
+            event.target.style.backgroundColor = 'black';
+        }
     }
 
     function desenhar(event) {
-      if (desenhando) {
-        event.target.style.backgroundColor = 'black';
-        const rowIndex = event.target.parentNode.rowIndex;
-        const cellIndex = event.target.cellIndex;
-        matriz[rowIndex][cellIndex] = 1;
-      }
-    }
-
-    function concatenaMatriz() {
-      const resultado = [];
-      for (let i = 0; i < 28; i++) {
-        resultado.push(...matriz[i]);
-      }
-      return resultado;
+        if (desenhando) {
+            event.target.style.backgroundColor = 'black';
+            const rowIndex = event.target.parentNode.rowIndex;
+            const cellIndex = event.target.cellIndex;
+            matriz[rowIndex * 28 + cellIndex] = 1;
+        }
     }
 
     matrizElement.addEventListener('mousedown', () => (desenhando = true));
@@ -64,52 +900,59 @@
     document.addEventListener('mouseup', () => (desenhando = false));
 
     limparButton.addEventListener('click', () => {
-      matrizElement.innerHTML = '';
-      matriz.forEach(() => {
-        const row = document.createElement('tr');
-        for (let j = 0; j < 28; j++) {
-          const cell = document.createElement('td');
-          cell.style.backgroundColor = 'white';
-          row.appendChild(cell);
-        }
-        matrizElement.appendChild(row);
-      });
-      matriz.forEach((row) => row.fill(0));
+        // matrizElement.innerHTML = '';
+        // for(let i=0; i<28; i++){
+        //   const row = document.createElement('tr');
+        //   for (let j = 0; j < 28; j++) {
+        //     const cell = document.createElement('td');
+        //     cell.style.backgroundColor = 'white';
+        //     row.appendChild(cell);
+        //   }
+        //   matrizElement.appendChild(row);
+        // }
+        // matriz.fill(0);
+        const cells = document.querySelectorAll('#matriz td');
+        cells.forEach(cell => {
+            cell.style.backgroundColor = 'white';
+        });
+        matriz.fill(0);
     });
 
-    function calculateOut(x, layer_w){
-        const nx = x.length;
-        const ny = layer_w/(nx+1);
-        let c = 0;
-        let y = [];
-        for(let j=0; j<ny; j++){
-            c = w[nx*ny+j];
-            for(let i=0; i<nx; i++){
-                c += x[i] * w[i*ny+j];
-            }
-            y.push(c);
-        }
-        return y;
+    function bipolarSigmoidal(x) {
+        return 2 / (1 + Math.exp(-x)) - 1;
     }
 
-    function zeros(n) {
-        const lista = [];
-        for (let i = 0; i < n; i++) {
-            lista.push(0);
+    function linear(x) {
+        return x;
+    }
+
+    function calculateOut(x, layer_w, activation) {
+        const nx = x.length;
+        const ny = layer_w.length / (nx + 1);
+        let c = 0;
+        let y = [];
+        for (let j = 0; j < ny; j++) {
+            c = layer_w[nx * ny + j];
+            for (let i = 0; i < nx; i++) {
+                c += x[i] * layer_w[i * ny + j];
+            }
+            y.push(activation(c));
         }
-        return lista;
+        return y;
     }
 
     // 28*28 w 100
     // 100 100
     // 100 10
     function predict(x) {
-        for(let i in w){
-            y = calculateOut(x, w[i]);
-            x = y;
+        let y = x;
+        for (let i = 0; i < w.length - 1; i++) {
+            y = calculateOut(y, w[i], bipolarSigmoidal);
         }
-        for(let i in y){
-            if(y[i] >= 0){
+        y = calculateOut(y, w[w.length - 1], linear);
+        console.log(y);
+        for (let i in y) {
+            if (y[i] >= 0) {
                 return i;
             }
         }
@@ -117,15 +960,13 @@
     }
 
     predictButton.addEventListener('click', () => {
-      const x = concatenaMatriz();
-      let soma = 0;
-      for(let xx of x){
-        soma += xx;
-      }
-
-
-      somaResultadoSpan.textContent = predict(x);
+        for (let x of matriz) {
+            if (x == 0) {
+                x = -1
+            }
+        }
+        predictionSpan.textContent = predict(matriz);
     });
-  </script>
+</script>
 </body>
 </html>

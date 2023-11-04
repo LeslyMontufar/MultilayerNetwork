@@ -1,85 +1,17 @@
 #include "definitions.h"
 #include "mnist.h"
-#include <random>
 #include <fstream>
 #include <sstream>
-#include <omp.h>
 #include <chrono> 
-
-#define USE_OMP 1
-
-class Layer {
-  public:
-    const size_t ny; 
-    std::vector<Number> w_before;
-    std::vector<Number> w;
-    std::vector<Number> y;
-    std::vector<Number> dyin;
-    const std::vector<Number>* x;
-    size_t nx;
-    const act activation;
-    std::vector<Number> dE_dz;
-    std::vector<Number> dE_dx;
-
-    Layer(const size_t& nNeurons, const act& activation) : ny(nNeurons), activation(activation) {
-      this->y.resize(nNeurons);
-      this->dyin.resize(nNeurons);
-      this->dE_dz.resize(nNeurons);
-    }
-
-    void initWeights(const std::vector<Number>& vx){
-      this->nx = vx.size();
-      this->x = &vx;
-      w.resize(nx*ny+ny); 
-      dE_dx.resize(nx);
-
-      std::random_device rd;
-      std::mt19937 gen(rd());
-      std::uniform_real_distribution<Number> dis(-1./nx, 1./nx);
-
-#if USE_OMP
-#pragma omp parallel for
-#endif
-      for (Number& value : w) {
-        value = dis(gen);
-      }
-    }
-
-    void calculateOut(){
-      Number c;
-      for(size_t j=0; j<ny; j++){
-        c = w[nx*ny+j];
-#if USE_OMP
-#pragma omp parallel for reduction(+ : c) 
-#endif
-        for(size_t i=0; i<nx; i++){
-          c += (*x)[i] * w[i*ny+j];
-        }
-        y[j] = activation.f(c);
-        dyin[j] = activation.df(y[j]);
-      }
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Layer& layer) {
-        size_t n = layer.w.size();
-        os << "\nWeights: ";
-        for (size_t i = 0; i < n-layer.ny; i++) {
-            os << layer.w[i] << " ";
-        }
-        os << "\nBias: ";
-        for (size_t i = n - layer.ny; i < n; i++) {
-            os << layer.w[i] << " ";
-        }
-
-        return os << "\n";
-    }
-};
+#include <cstdio>
+#include "Layer.h"
+#include "w.h"
 
 class MLP {
   private:
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 50;
+    size_t epochs = 20;
     Number alpha = 0.01;
     std::vector<Layer> layers;
 
@@ -104,10 +36,6 @@ class MLP {
 
     // methods
     void predict(){
-// #if USE_OMP
-// #pragma omp parallel for
-// #endif
-// um depende do resultado do anterior, apesar da referencia nao mudar
       for(size_t i=0; i<layers.size(); i++){
         layers[i].calculateOut();
       }
@@ -163,10 +91,8 @@ class MLP {
     }
 
     void validation(std::vector<Sample>& samples){
-#if USE_OMP
-#pragma omp parallel for
-#endif
       winRate = 0;
+#pragma omp parallel for
       for(Sample& sample : samples){
         layers[0].x = &sample.x;
         predict();
@@ -225,33 +151,15 @@ class MLP {
           
         }
         epochError[epoch] /= nsamples;
-        validation(samples);
+        validation(vsamples); // Validation with validation samples
         epochWinRate[epoch] = winRate;
 
         std::cout << (int) winRate << "%";
-        if(winRate>=100){ // lembrar de anotar quanto deu a MSE final, para coloca-la como condicao
+        if(winRate>=100){ 
           break;
         }
-        else if((int)winRate > (int)epochWinRate[epoch-1]){
-          if(winRate>=99){
-            updateMe();
-          } 
-          else if(winRate>=98){
-            updateMe();
-          }
-          else if(winRate>=97){
-            updateMe();
-            break;
-          }
-          else if(winRate>=96){
-            updateMe();
-          }
-          else if(winRate>=95){
-            updateMe();
-          }
-          else if(winRate==92){
-            updateMe();
-          }
+        else if((int)winRate > (int)epochWinRate[epoch-1] && (int)winRate > 90){
+          updateMe(winRate);
         }
       }
       std::cout << "\n\nTreinamento concluido apos " << epoch << " epocas.\n"; //sem +1
@@ -259,13 +167,30 @@ class MLP {
       
     }
 
-    void updateMe(){
-        std::cout << "\n\n";
+    void detailedResult(){
+      winRate = 0;
+      for(Sample& sample :samples){
+        layers[0].x = &sample.x;
+        predict();
+        sample.labelPredicted = classification(layers.back().y);
+        if(sample.labelPredicted == sample.label){
+          winRate+=1;
+        }
+        std::cout << sample.label << "\ttarget: " << sample.t << "\n" << sample.labelPredicted << "\ty\t: " << layers.back().y << "\n\n";
+      }
+      std::cout << "WinRate final: " << winRate/samples.size()*100 << "%\n\n";;
+        
+    }
+
+    void updateMe(Number tag){
+        std::cout << "\n\nValidation: " << tag << "  \n\n";
         showResults(samples);
-        std::cout << "\n\n";
+        std::cout << "\n";
         showResults(vsamples);
-        std::cout << "\n\n";
-        exportNetwork();
+        std::cout << "\n";
+        if(!tag) tag = winRate;
+        exportNetwork(tag);
+        saveNetwork();
         std::cout << "\n\n";
     }
 
@@ -282,34 +207,35 @@ class MLP {
       layers.push_back(layer);
     }
 
-    void exportNetwork(){
-      std::ostringstream json;
-      json << "{\n";
-      json << "\t\"weights\": [";
+    void exportNetwork(const Number& tag){
+      char filename[50];
+      snprintf(filename, sizeof(filename), "front-end/w%.0f.js", tag);
+
+      std::ostringstream content;
+      content << "const w = [";
 
       for(const Layer& layer : layers) {
         size_t n = layer.w.size();
-        json << "[";
+        content << "[";
         for (size_t i = 0; i < n; i++) {
-            json << layer.w[i];
+            content << layer.w[i];
             if (i < n - 1) {
-                json << ",";
+              content << ",";
             }
         }
-        json << "]";
+        content << "]";
         if(&layer != &layers.back()){
-          json << ",";
+          content << ",";
         }
 
       }
-      json << "]\n";
-      json << "}\n";
+      content << "]\n";
 
-      std::ofstream file("front-end/trainedNetwork.json");
+      std::ofstream file(filename);
       if (file.is_open()) {
-        file << json.str();
+        file << content.str();
         file.close();
-        std::cout << "Dados salvos em trainedNetwork.json.\n";
+        std::cout << "Dados salvos em " << filename << ".\n";
       } else {
         std::cerr << "Erro ao abrir o arquivo para escrita.\n";
       }
@@ -349,45 +275,90 @@ class MLP {
       }
       std::cout << "\n";
     }
+
+    void saveNetwork(){
+      std::ostringstream content;
+      content << "#ifndef W_H\n";
+      content << "#define W_H\n";
+      content << "#include \"definitions.h\"\n";
+      content << "std::vector<std::vector<Number>> w = {\n";
+      
+      for(size_t i=0; i<layers.size(); i++){
+        content << "{"; 
+        for(int iw=0; iw<layers[i].w.size()-1; iw++){
+          content << layers[i].w[iw] << ", ";
+        }
+        content << layers[i].w.back();
+        content << "}";
+        if(i<layers.size()-1){
+          content << ",\n";
+        } else{
+          content << "\n";
+        }
+      }
+      content << "};\n";
+      content << "#endif\n";
+
+      std::ofstream file("w.h");
+      if (file.is_open()) {
+        file << content.str();
+        file.close();
+        std::cout << "Dados salvos em w.h.\n";
+      } else {
+        std::cerr << "Erro ao abrir o arquivo de w para escrita.\n";
+      }
+      
+    }
+
 };
 
 int main() {
+
+#if 1
   const char *imageFile = "input/train-images.idx3-ubyte";
   const char *labelFile = "input/train-labels.idx1-ubyte";
   const char *testImageFile = "input/t10k-images.idx3-ubyte";
   const char *testLabelFile = "input/t10k-labels.idx1-ubyte";
-  
+
   std::vector<Sample> samples, vsamples;
   std::cout << "Erro: " << loadData(imageFile, labelFile, samples, -1, 0) << "\n";
   std::cout << "Erro: " << loadData(testImageFile, testLabelFile, vsamples, -1, 0) << "\n";
   
   MLP network(samples, vsamples, linear,
               [](std::vector<Number>& y) -> char {
+                Number max = 0;
+                char imax = '!' - '0';
                 for(char i=0; i<(char)y.size(); i++){
-                  if(y[i]>=0){
-                    return i + '0';
+                  if(y[i]>max){
+                    max = y[i];
+                    imax = i;
                   } 
                 } 
-                return 0;
+                return imax + '0';
               });
-
   std::cout << "Quatidade de amostras de treinamento: " << samples.size() << "\n";
   std::cout << "Quatidade de amostras de teste: " << vsamples.size() << "\n";
-  
+
   network.addLayer(Layer(100,bipolarSigmoid));
   network.addLayer(Layer(100,bipolarSigmoid));
+#else
+  MLP network(samplesOR, samplesOR, linear,
+              [](std::vector<Number>& y) -> char {
+                return (y[0]>=0)? '1' : '0';
+              });
+
+  network.addLayer(Layer(2,bipolarSigmoid));
+#endif
+
   
   auto start_time = std::chrono::high_resolution_clock::now(); 
   network.train();
   auto end_time = std::chrono::high_resolution_clock::now(); 
   
   std::chrono::duration<double> duration = end_time - start_time; 
-  std::cout << "Training finished after " << duration.count() <<" seconds\n\n";
+  std::cout << "Training finished after " << duration.count() <<" seconds\n";
   
-  network.showResults(samples);
-  std::cout << "\n\n";
-  network.showResults(vsamples);
-  std::cout << "\n\n";
-  network.exportNetwork();
+  network.updateMe(0);
+
   return 0;
 }

@@ -30,9 +30,7 @@ class Sample {
         for(const Number& ti : sample.t) {
             os << ti << " ";
         }
-        os << "\nLabel: ";
-        os << sample.label;
-        os << "\n\n";
+        os << "\nLabel: " << sample.label << "\n\n";
 
         return os;
     }

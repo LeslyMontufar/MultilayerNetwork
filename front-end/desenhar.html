@@ -8,13 +8,13 @@
         table {
             border: 1px solid #000;
             border-collapse: collapse;
-            width: 560px; /* Define a largura da tabela (28 células de 20px cada) */
-            height: 560px; /* Define a altura da tabela (28 células de 20px cada) */
+            width: 280px; /* Define a largura da tabela (28 células de 20px cada) */
+            height: 280px; /* Define a altura da tabela (28 células de 20px cada) */
         }
 
         td {
-            width: 20px;
-            height: 20px;
+            width: 10px;
+            height: 10px;
         }
     </style>
     <script src="w.js"></script>
@@ -901,22 +901,12 @@
     document.addEventListener('mouseup', () => (desenhando = false));
 
     limparButton.addEventListener('click', () => {
-        // matrizElement.innerHTML = '';
-        // for(let i=0; i<28; i++){
-        //   const row = document.createElement('tr');
-        //   for (let j = 0; j < 28; j++) {
-        //     const cell = document.createElement('td');
-        //     cell.style.backgroundColor = 'white';
-        //     row.appendChild(cell);
-        //   }
-        //   matrizElement.appendChild(row);
-        // }
-        // matriz.fill(0);
         const cells = document.querySelectorAll('#matriz td');
         cells.forEach(cell => {
             cell.style.backgroundColor = 'white';
         });
         matriz.fill(0);
+        predictionSpan.textContent = ""
     });
 
     function bipolarSigmoidal(x) {
@@ -942,31 +932,31 @@
         return y;
     }
 
-    // 28*28 w 100
-    // 100 100
-    // 100 10
     function predict(x) {
-        let y = x;
+        let y = x, max = -100, imax = -1;
         for (let i = 0; i < w.length - 1; i++) {
             y = calculateOut(y, w[i], bipolarSigmoidal);
         }
         y = calculateOut(y, w[w.length - 1], linear);
         console.log(y);
         for (let i in y) {
-            if (y[i] >= 0) {
-                return i;
+            if (y[i] > max) {
+                max = y[i]
+                imax = i;
             }
         }
-        return -1;
+        return imax;
     }
 
     predictButton.addEventListener('click', () => {
         for (let x of matriz) {
-            if (x == 0) {
+            if (x === 0) {
                 x = -1
             }
         }
-        predictionSpan.textContent = predict(matriz);
+        predictionSpan.textContent = predict(matriz).toString(
+
+        );
     });
 </script>
 </body>

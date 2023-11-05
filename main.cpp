@@ -138,7 +138,6 @@ class MLP {
       std::cout << "\n";
       for(epoch = 0; epoch < epochs; epoch++){ 
         mse = 0;
-        // winRate = 0;
         for(size_t i = 0; i < nsamples; i++){
           progressBar(((epoch+1)/(Number)epochs)*100, (i+1)/(Number) nsamples *100);
           // FeedForward

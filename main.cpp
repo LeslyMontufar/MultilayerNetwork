@@ -5,7 +5,6 @@
 #include <chrono> 
 #include <cstdio>
 #include "Layer.h"
-#include "w.h"
 
 class MLP {
   private:
@@ -17,7 +16,6 @@ class MLP {
 
     Number mse; // Mean Square Error
     std::vector<Number> epochError;
-    Number biggerdw;
     const act lastActivation;
     char (*classification)(std::vector<Number>&);
     std::vector<Number> epochWinRate;

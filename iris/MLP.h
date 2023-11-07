@@ -16,6 +16,9 @@ private:
     std::vector<Layer> layers;
 
     Number mse; // Mean Square Error
+    Number tolerance = 6e-7;
+    Number MSE_before = 0;
+
     std::vector<Number> epochError;
     const act lastActivation;
     char (*classification)(std::vector<Number>&);
@@ -23,7 +26,7 @@ private:
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
     std::vector<int> confusionTable;
-//    int ngroup;
+
 
 public:
     MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples,
@@ -33,80 +36,31 @@ public:
         epochWinRate.resize(epochs);
         confusionTable.resize(100);
 #if 1
-    std::vector<Number> max(4), min(4);
-    for(int i=0; i<4; i++){
-        max[i] = samples[0].x[i];
-        min[i] = samples[0].x[i];
-    }
-    for(int s=1; s<samples.size(); s++){
+        std::vector<Number> max(4), min(4);
         for(int i=0; i<4; i++){
-            if(samples[s].x[i]>max[i]){
-                max[i] = samples[s].x[i];
-            }
-            if(samples[s].x[i]<min[i]){
-                min[i] = samples[s].x[i];
-            }
+            max[i] = samples[0].x[i];
+            min[i] = samples[0].x[i];
         }
-    }
-    for(Sample& sample : samples){
-        for(int i=0; i<4; i++){
-            sample.x[i] = 2*(sample.x[i]-min[i])/(max[i]-min[i]) - 1;
 
-            std::cout << sample.x[i] << " ";
+        for(int s=1; s<samples.size(); s++){
+            for(int i=0; i<4; i++){
+                if(samples[s].x[i]>max[i]){
+                    max[i] = samples[s].x[i];
+                }
+                if(samples[s].x[i]<min[i]){
+                    min[i] = samples[s].x[i];
+                }
+            }
         }
-        std::cout << "\n";
-    }
-    std::cout << "\n\n";
+#pragma omp parallel for
+        for(Sample& sample : samples){
+            for(int i=0; i<4; i++){
+                sample.x[i] = 2*(sample.x[i]-min[i])/(max[i]-min[i]) - 1;
+            }
+        }
 #endif
 
-//        std::vector<Number> mean(4), sigma(4);
-//        Number ns = samples.size();
-
-//        for(Sample& s : samples){
-//            for(int i=0;i<4;i++){
-//                mean[i] += s.x[i];
-//            }
-//        }
-//        for(int i=0; i<4; i++){
-//            mean[i] /= ns;
-//        }
-//        for(Sample& s : samples){
-//            for(int i=0;i<4;i++){
-//                sigma[i] += (s.x[i]-mean[i])*(s.x[i]-mean[i]);
-//            }
-//        }
-//        for(int i=0; i<4; i++){
-//            sigma[i] = sqrt(sigma[i]/ns);
-//        }
-
-
-
     }
-
-//    MLP(std::vector<Sample>& s, int ngroup,
-//        const act& lastActivation, char(*classification)(std::vector<Number>&))
-//            : ngroup(ngroup), lastActivation(lastActivation), classification(classification) {
-//        epochError.resize(epochs);
-//        epochWinRate.resize(epochs);
-//
-//        int n = s.size()/ngroup; // 150/5 = 30 -> 30/3 = 10 = 50/5
-//        // samples.resize((n-2)*ngroup);
-//        vsamples.resize(n);
-//        tsamples.resize(n);
-//#pragma omp parallel for
-//        for(int i=0; i<n/3; i+=3){
-//            for(int ii=0; ii<3; i++){
-//                tsamples[i+ii] = s[i + ii*50];
-//            }
-//        }
-//#pragma omp parallel for
-//        for(int i=n/3; i<50; i+=3){
-//            for(int ii=0; ii<3; i++){
-//                samples.push_back(s[i + ii*50]);
-//            }
-//        }
-//
-//    }
 
     void predict(){
         for(size_t i=0; i<layers.size(); i++){
@@ -176,17 +130,17 @@ public:
         winRate = winRate/samples.size() *100;
     }
 
-    void progressBar(const int& epochPercent, const int& samplePercent){
+    void progressBar(const int& percent, const int& epochPercent){
         std::cout << "\r[";
 #pragma omp parallel for
-        for (int i = 0; i < samplePercent; i++) {
-            std::cout << char(254);
+        for (int i = 0; i < percent; i++) {
+            std::cout << "■";//char(254);
         }
 #pragma omp parallel for
-        for(int i=samplePercent; i<100; i++) {
+        for(int i=percent; i<100; i++) {
             std::cout << " ";
         }
-        std::cout << "] " << epochPercent << "% " << samplePercent << "% ";
+        std::cout << "] " << percent << "% " << epochPercent << "% ";
         std::cout.flush();
     }
 
@@ -211,7 +165,6 @@ public:
         for(epoch = 0; epoch < epochs; epoch++){
             mse = 0;
             for(size_t i = 0; i < nsamples; i++){
-                progressBar(((epoch+1)/(Number)epochs)*100, (i+1)/(Number) nsamples *100);
                 // FeedForward
                 layers[0].x = &samples[i].x;
                 predict();
@@ -225,19 +178,23 @@ public:
             validation(vsamples); // Validation with validation samples
             epochWinRate[epoch] = winRate;
 
-            std::cout << (int) winRate << "%";
-            if(winRate>=100){
+            progressBar((int) winRate,((epoch+1)/(Number)epochs)*100);
+            
+            if(std::fabs(MSE_before-epochError[epoch])<tolerance && winRate>=98){ 
                 break;
             }
             else if((int)winRate > (int)epochWinRate[epoch-1] && (int)winRate > 92){
                 std::cout << "\n\nTreinamento apos " << epoch + 1 << " epocas.\n";
-                std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n\n";
+                std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n";
+                std::cout << "Stop condition (d_MSE < tolerance): "<< MSE_before-epochError[epoch] << "\n\n";
                 saveNetwork();
                 std::cout << "\n\n";
             }
+            MSE_before = epochError[epoch];
         }
         std::cout << "\n\nTreinamento concluido apos " << epoch << " epocas.\n"; //sem +1
-        std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch-1] << "\n\n";
+        std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n";
+        std::cout << "Stop condition (d_MSE < tolerance): "<< epochError[epoch-1]-epochError[epoch] << "\n\n";
 
     }
 

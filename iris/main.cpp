@@ -1,23 +1,25 @@
+#include "MLP.h"
 #include "iris.h"
-#include "main.h"
 
 int main() {
-    MLP network(samplesOR, samplesOR, linear,
-              [](std::vector<Number>& y) -> char {
-                return (y[0]>=0)? '1' : '0';
-              });
+  MLP network(samples, samples, linear,
+            [](std::vector<Number>& y) -> char {
+              return '0' + std::round(y[0]);
+            });
 
-    network.addLayer(Layer(2,bipolarSigmoid));
+  network.addLayer(Layer(10,bipolarSigmoid));
+  network.addLayer(Layer(50,bipolarSigmoid));
+  network.addLayer(Layer(10,bipolarSigmoid));
 
 
-    auto start_time = std::chrono::high_resolution_clock::now();
-    network.train();
-    auto end_time = std::chrono::high_resolution_clock::now();
+  auto start_time = std::chrono::high_resolution_clock::now();
+  network.train();
+  auto end_time = std::chrono::high_resolution_clock::now();
 
-    std::chrono::duration<double> duration = end_time - start_time;
-    std::cout << "Training finished after " << duration.count() <<" seconds\n";
+  std::chrono::duration<double> duration = end_time - start_time;
+  std::cout << "Training finished after " << duration.count() <<" seconds\n";
 
-    network.updateMe(0);
+  network.saveNetwork();
 
-    return 0;
+  return 0;
 }

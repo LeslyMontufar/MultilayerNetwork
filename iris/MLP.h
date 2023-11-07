@@ -1,21 +1,18 @@
-#ifndef MULTILAYERNETWORK_MAIN_H
-#define MULTILAYERNETWORK_MAIN_H
+#ifndef MULTILAYERNETWORK_MLP_H
+#define MULTILAYERNETWORK_MLP_H
 
-#include "definitions.h"
-#include "mnist.h"
-#include <fstream>
-#include <sstream>
-#include <chrono>
-#include <cstdio>
+#include "Sample.h"
 #include "Layer.h"
-#include "w.h"
 
 class MLP {
 private:
+//    std::vector<Sample> s; // Training and Validation available samples
     std::vector<Sample> samples; // Training samples
     std::vector<Sample> vsamples; // Validation samples
-    size_t epochs = 20;
-    Number alpha = 0.01;
+
+    size_t epochs = 15000;
+    Number alpha = 0.008;
+    Number beta = 0.005;
     std::vector<Layer> layers;
 
     Number mse; // Mean Square Error
@@ -26,6 +23,7 @@ private:
     Number winRate;
     size_t epoch; // Epoch needed to complete the training
     std::vector<int> confusionTable;
+//    int ngroup;
 
 public:
     MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples,
@@ -35,6 +33,31 @@ public:
         epochWinRate.resize(epochs);
         confusionTable.resize(100);
     }
+
+//    MLP(std::vector<Sample>& s, int ngroup,
+//        const act& lastActivation, char(*classification)(std::vector<Number>&))
+//            : ngroup(ngroup), lastActivation(lastActivation), classification(classification) {
+//        epochError.resize(epochs);
+//        epochWinRate.resize(epochs);
+//
+//        int n = s.size()/ngroup; // 150/5 = 30 -> 30/3 = 10 = 50/5
+//        // samples.resize((n-2)*ngroup);
+//        vsamples.resize(n);
+//        tsamples.resize(n);
+//#pragma omp parallel for
+//        for(int i=0; i<n/3; i+=3){
+//            for(int ii=0; ii<3; i++){
+//                tsamples[i+ii] = s[i + ii*50];
+//            }
+//        }
+//#pragma omp parallel for
+//        for(int i=n/3; i<50; i+=3){
+//            for(int ii=0; ii<3; i++){
+//                samples.push_back(s[i + ii*50]);
+//            }
+//        }
+//
+//    }
 
     void predict(){
         for(size_t i=0; i<layers.size(); i++){
@@ -59,10 +82,7 @@ public:
 
         for(int l=layers.size()-1; l>=0; l--){
             layer = &layers[l];
-            sum = 0;
-#if USE_OMP
 #pragma omp parallel for
-#endif
             for(size_t j=0; j<layer->ny; j++){
                 layer->dE_dz[j] = layer->dyin[j] * (*dE_dy)[j];
             }
@@ -70,9 +90,7 @@ public:
             // dE_dx = dz_dx * dE_dz = w * dE_dz, w sem o b
             for(size_t i=0; i<layer->nx; i++){
                 sum = 0;
-#if USE_OMP
 #pragma omp parallel for reduction(+ : sum)
-#endif
                 for(size_t j=0; j<layer->ny; j++){
                     sum += layer->w[i*layer->ny+j]*layer->dE_dz[j];
                 }
@@ -84,9 +102,13 @@ public:
             for(size_t j=0; j<layer->ny; j++){
 #pragma omp parallel for
                 for(size_t i=0; i<layer->nx; i++){
-                    layer->w[i*layer->ny+j] -= alpha * (*(layer->x))[i] * layer->dE_dz[j];
+                    layer->w[i*layer->ny+j] += beta * layer->dw[i*layer->ny+j];
+                    layer->dw[i*layer->ny+j] = alpha * (*(layer->x))[i] * layer->dE_dz[j];
+                    layer->w[i*layer->ny+j] -= layer->dw[i*layer->ny+j];
                 }
-                layer->w[layer->nx*layer->ny+j] -= alpha * layer->dE_dz[j];
+                layer->w[layer->nx*layer->ny+j] += beta * layer->dw[layer->nx*layer->ny+j];
+                layer->dw[layer->nx*layer->ny+j] = alpha * layer->dE_dz[j];
+                layer->w[layer->nx*layer->ny+j] -= layer->dw[layer->nx*layer->ny+j];
             }
         }
     }
@@ -158,8 +180,11 @@ public:
             if(winRate>=100){
                 break;
             }
-            else if((int)winRate > (int)epochWinRate[epoch-1] && (int)winRate > 90){
-                updateMe(winRate);
+            else if((int)winRate > (int)epochWinRate[epoch-1] && (int)winRate > 92){
+                std::cout << "\n\nTreinamento apos " << epoch + 1 << " epocas.\n";
+                std::cout << "WinRate: " << winRate << "%\tMSE: " << epochError[epoch] << "\n\n";
+                saveNetwork();
+                std::cout << "\n\n";
             }
         }
         std::cout << "\n\nTreinamento concluido apos " << epoch << " epocas.\n"; //sem +1
@@ -178,7 +203,7 @@ public:
             }
             std::cout << sample.label << "\ttarget: " << sample.t << "\n" << sample.labelPredicted << "\ty\t: " << layers.back().y << "\n\n";
         }
-        std::cout << "WinRate final: " << winRate/samples.size()*100 << "%\n\n";;
+        std::cout << "WinRate final: " << winRate/samples.size()*100 << "%\n\n";
 
     }
 
@@ -312,4 +337,4 @@ public:
 
 };
 
-#endif //MULTILAYERNETWORK_MAIN_H
+#endif //MULTILAYERNETWORK_MLP_H

@@ -28,10 +28,59 @@ private:
 public:
     MLP(std::vector<Sample>& samples, std::vector<Sample>& vsamples,
         const act& lastActivation, char(*classification)(std::vector<Number>&))
-            : samples(samples), vsamples(vsamples), lastActivation(lastActivation), classification(classification) {
+            :samples(samples), vsamples(vsamples), lastActivation(lastActivation), classification(classification) {
         epochError.resize(epochs);
         epochWinRate.resize(epochs);
         confusionTable.resize(100);
+#if 1
+    std::vector<Number> max(4), min(4);
+    for(int i=0; i<4; i++){
+        max[i] = samples[0].x[i];
+        min[i] = samples[0].x[i];
+    }
+    for(int s=1; s<samples.size(); s++){
+        for(int i=0; i<4; i++){
+            if(samples[s].x[i]>max[i]){
+                max[i] = samples[s].x[i];
+            }
+            if(samples[s].x[i]<min[i]){
+                min[i] = samples[s].x[i];
+            }
+        }
+    }
+    for(Sample& sample : samples){
+        for(int i=0; i<4; i++){
+            sample.x[i] = 2*(sample.x[i]-min[i])/(max[i]-min[i]) - 1;
+
+            std::cout << sample.x[i] << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n\n";
+#endif
+
+//        std::vector<Number> mean(4), sigma(4);
+//        Number ns = samples.size();
+
+//        for(Sample& s : samples){
+//            for(int i=0;i<4;i++){
+//                mean[i] += s.x[i];
+//            }
+//        }
+//        for(int i=0; i<4; i++){
+//            mean[i] /= ns;
+//        }
+//        for(Sample& s : samples){
+//            for(int i=0;i<4;i++){
+//                sigma[i] += (s.x[i]-mean[i])*(s.x[i]-mean[i]);
+//            }
+//        }
+//        for(int i=0; i<4; i++){
+//            sigma[i] = sqrt(sigma[i]/ns);
+//        }
+
+
+
     }
 
 //    MLP(std::vector<Sample>& s, int ngroup,

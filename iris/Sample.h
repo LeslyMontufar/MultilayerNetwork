@@ -2,7 +2,6 @@
 
 class Sample {
 public:
-    // attributes
     std::vector<Number> x;
     std::vector<Number> t;
     char label;

@@ -35,9 +35,7 @@ class Layer {
       std::mt19937 gen(rd());
       std::uniform_real_distribution<Number> dis(-1./nx, 1./nx);
 
-#if USE_OMP
 #pragma omp parallel for
-#endif
       for (Number& value : w) {
         value = dis(gen);
       }
@@ -47,9 +45,8 @@ class Layer {
       Number c;
       for(size_t j=0; j<ny; j++){
         c = w[nx*ny+j];
-#if USE_OMP
+
 #pragma omp parallel for reduction(+ : c) 
-#endif
         for(size_t i=0; i<nx; i++){
           c += (*x)[i] * w[i*ny+j];
         }
